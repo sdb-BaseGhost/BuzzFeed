@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.sdb.buzzfeed.mapper.inboxMapper">
+    <insert id="insertInbox">
+        INSERT INTO inbox (user_id, content_id, publish_time)
+        VALUES
+        <foreach collection="activeFans" item="uid" separator=",">
+            (#{uid}, #{contentId}, #{publishTime})
+        </foreach>
+    </insert>
+
+</mapper>
