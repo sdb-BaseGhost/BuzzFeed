@@ -8,11 +8,13 @@ import java.util.List;
 public interface userMapper {
     List<Long> selectFollowsByUserId(Long userId);
 
-    List<Long> selectFollowersByUserId(String userId);
+    List<Long> selectFollowersByUserId(Long userId);
 
     List<Long> selectActiveFansByIds(List<Long> fansList);
 
-    boolean isActive(Long followId);
+    Integer isActive(Long userId);
 
-    Integer selectFollowsNumber(String userId);
+    Integer selectFollowsNumber(Long userId);
+
+    List<Long> selectVbyId(List<Long> follows);
 }

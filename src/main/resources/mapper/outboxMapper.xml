@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.sdb.buzzfeed.mapper.outboxMapper">
+    <select id="getContent" resultType="org.sdb.buzzfeed.entity.Content">
+        SELECT content_id,
+               publish_time,
+               user_id
+        FROM item_info
+        WHERE user_id in
+        <foreach collection="influencer" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        order by publish_time desc
+        limit #{num}
+    </select>
+
+</mapper>

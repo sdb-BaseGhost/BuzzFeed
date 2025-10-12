@@ -19,4 +19,14 @@ public class Feed {
      * 最后一条feed流的时间
      */
     private LocalDateTime lastTime;
+
+    /**
+     * 判断是操作类型：0是下拉，1是上滑
+     */
+    private Integer type;
+
+    /**
+     * 发起请求的用户id
+     */
+    private Long userId;
 }

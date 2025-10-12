@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class FeedController {
 
-    private FeedService feedService;
+    private final FeedService feedService;
 
     /**
      * 上滑操作
@@ -25,18 +25,11 @@ public class FeedController {
     }
 
     /**
-     * 下拉操作之MySQL
+     * 下拉操作
      */
-    @PostMapping("/downFeedM")
-    public Result downFeedM(@RequestBody Feed feed){
-        return Result.success(feedService.downFeedM(feed));
+    @PostMapping("/downFeed")
+    public Result downFeed(@RequestBody Feed feed){
+        return Result.success(feedService.getFeed(feed));
     }
 
-    /**
-     * 下拉操作之Redis
-     */
-    @PostMapping("/downFeedR")
-    public Result downFeedR(@RequestBody Feed feed){
-        return Result.success(feedService.downFeedR(feed));
-    }
 }

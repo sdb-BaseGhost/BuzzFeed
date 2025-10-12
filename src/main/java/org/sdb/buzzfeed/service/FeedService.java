@@ -8,7 +8,5 @@ import java.util.List;
 public interface FeedService {
     List<Content> upFeedM(Feed upFeed);
 
-    List<Content> downFeedM(Feed downFeed);
-
-    Object downFeedR(Feed feed);
+    List<Content> getFeed(Feed feed);
 }

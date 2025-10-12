@@ -16,7 +16,7 @@ public class Content {
     private LocalDateTime updateTime;
 
     /** 发布者用户ID（关联用户表的主键） */
-    private String userId;
+    private Long userId;
 
     /** 简短文本（例如内容摘要、短句、标题等） */
     private String shortText;

@@ -26,7 +26,7 @@ public class PostServiceImpl implements PostService {
     public Object postContent(Content content) {
         //1.拿到字段
         int id = content.getContentId();
-        String userId = content.getUserId();
+        Long userId = content.getUserId();
         String shortText = content.getShortText();
         String longText = content.getLongText();
         String photo = content.getPhoto();
@@ -59,7 +59,7 @@ public class PostServiceImpl implements PostService {
         if(followerNumber > 1){
             Map<String, String> mapContent = util.objectToMap(content);
             //  将发布内容存到Redis中，保证缓存预热和缓存一致性
-            stringRedisTemplate.opsForHash().putAll(userId,mapContent);
+            stringRedisTemplate.opsForHash().putAll((Long.toString(userId)),mapContent);
             //  遍历粉丝列表筛选出活跃粉丝
             List<Long> activeFans = userMapper.selectActiveFansByIds(fansList);
             //  批量插入到活跃粉丝的收件箱
