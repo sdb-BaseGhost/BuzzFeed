@@ -9,6 +9,7 @@ import org.sdb.buzzfeed.service.PostService;
 import org.sdb.buzzfeed.util.util;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
@@ -23,6 +24,7 @@ public class PostServiceImpl implements PostService {
     private final StringRedisTemplate stringRedisTemplate;
 
     @Override
+    @Transactional
     public Object postContent(Content content) {
         //1.拿到字段
         int id = content.getContentId();
@@ -70,7 +72,7 @@ public class PostServiceImpl implements PostService {
             //  推送到粉丝的收件箱中
             isSuccess = inboxMapper.insertInbox(fansList, content.getContentId(),content.getPublishTime());
         }
-        return isSuccess;
+        return content;
     }
 }
 

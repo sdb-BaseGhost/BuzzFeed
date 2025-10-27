@@ -14,7 +14,7 @@ public class Feed {
     /**
      * 最后一条feed流的id
      */
-    private String contentId;
+    private Long contentId;
     /**
      * 最后一条feed流的时间
      */

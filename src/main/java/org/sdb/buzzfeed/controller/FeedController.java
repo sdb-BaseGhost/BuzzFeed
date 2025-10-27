@@ -17,17 +17,9 @@ public class FeedController {
     private final FeedService feedService;
 
     /**
-     * 上滑操作
+     * 上拉/下滑操作
      */
-    @PostMapping("/upFeedM")
-    public Result upFeedM(@RequestBody Feed feed){
-        return Result.success(feedService);
-    }
-
-    /**
-     * 下拉操作
-     */
-    @PostMapping("/downFeed")
+    @PostMapping("/getFeed")
     public Result downFeed(@RequestBody Feed feed){
         return Result.success(feedService.getFeed(feed));
     }

@@ -30,9 +30,9 @@
 
 <!--    查询活跃粉丝-->
     <select id="selectActiveFansByIds" resultType="java.lang.Long">
-        SELECT id
+        SELECT user_id
         FROM user
-        WHERE id IN
+        WHERE user_id IN
         <foreach collection="fansList" item="id" open="(" separator="," close=")">
             #{id}
         </foreach>

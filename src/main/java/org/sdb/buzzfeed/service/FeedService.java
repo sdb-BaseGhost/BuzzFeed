@@ -6,7 +6,5 @@ import org.sdb.buzzfeed.entity.Feed;
 import java.util.List;
 
 public interface FeedService {
-    List<Content> upFeedM(Feed upFeed);
-
     List<Content> getFeed(Feed feed);
 }
