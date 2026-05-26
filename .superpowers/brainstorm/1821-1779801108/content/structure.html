@@ -1,0 +1,61 @@
+<h2>项目结构</h2>
+<p class="subtitle">Frontend 目录布局</p>
+
+<div class="mockup">
+  <div class="mockup-header">Frontend/ 目录结构</div>
+  <div class="mockup-body" style="font-family:monospace;font-size:13px;line-height:1.8;color:#e7e9ea;">
+    <div style="padding:16px;">
+      <div>Frontend/</div>
+      <div>├── src/</div>
+      <div>│   ├── api/                <span style="color:#536471;">// Axios 实例 + 请求封装</span></div>
+      <div>│   │   ├── index.js        <span style="color:#536471;">// Axios 实例、拦截器</span></div>
+      <div>│   │   ├── auth.js         <span style="color:#536471;">// 登录/注册接口</span></div>
+      <div>│   │   ├── feed.js         <span style="color:#536471;">// Feed 流接口</span></div>
+      <div>│   │   ├── post.js         <span style="color:#536471;">// 发布/点赞/评论接口</span></div>
+      <div>│   │   ├── user.js         <span style="color:#536471;">// 用户信息/关注接口</span></div>
+      <div>│   │   └── search.js       <span style="color:#536471;">// 搜索接口</span></div>
+      <div>│   ├── assets/             <span style="color:#536471;">// 静态资源</span></div>
+      <div>│   ├── components/         <span style="color:#536471;">// 通用组件</span></div>
+      <div>│   │   ├── layout/         <span style="color:#536471;">// 三栏布局骨架</span></div>
+      <div>│   │   ├── feed/           <span style="color:#536471;">// Feed 相关组件</span></div>
+      <div>│   │   ├── post/           <span style="color:#536471;">// 发布/帖子组件</span></div>
+      <div>│   │   ├── user/           <span style="color:#536471;">// 用户卡片/头像</span></div>
+      <div>│   │   └── common/         <span style="color:#536471;">// 按钮、输入框、弹窗等</span></div>
+      <div>│   ├── composables/        <span style="color:#536471;">// 逻辑复用 hooks</span></div>
+      <div>│   ├── mock/               <span style="color:#536471;">// Mock 数据</span></div>
+      <div>│   ├── router/             <span style="color:#536471;">// 路由配置</span></div>
+      <div>│   ├── stores/             <span style="color:#536471;">// Pinia 状态管理</span></div>
+      <div>│   ├── views/              <span style="color:#536471;">// 页面级组件</span></div>
+      <div>│   ├── App.vue</div>
+      <div>│   ├── main.js</div>
+      <div>│   └── style.css           <span style="color:#536471;">// Tailwind 入口</span></div>
+      <div>├── public/</div>
+      <div>├── index.html</div>
+      <div>├── tailwind.config.js</div>
+      <div>├── vite.config.js</div>
+      <div>└── package.json</div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:24px;">
+  <h3>路由规划</h3>
+  <div class="mockup">
+    <div class="mockup-header">页面路由</div>
+    <div class="mockup-body" style="font-family:monospace;font-size:13px;line-height:2;color:#e7e9ea;">
+      <div style="padding:16px;">
+        <div>/login              <span style="color:#536471;">// 登录页</span></div>
+        <div>/register           <span style="color:#536471;">// 注册页</span></div>
+        <div>/                   <span style="color:#536471;">// 首页 Feed（需登录）</span></div>
+        <div>/following          <span style="color:#536471;">// 关注页 Feed</span></div>
+        <div>/explore            <span style="color:#536471;">// 搜索/发现页</span></div>
+        <div>/notifications      <span style="color:#536471;">// 通知页</span></div>
+        <div>/messages           <span style="color:#536471;">// 消息页</span></div>
+        <div>/profile/:userId    <span style="color:#536471;">// 用户资料页</span></div>
+        <div>/profile/:userId/followers  <span style="color:#536471;">// 粉丝列表</span></div>
+        <div>/profile/:userId/following  <span style="color:#536471;">// 关注列表</span></div>
+        <div>/post/:postId       <span style="color:#536471;">// 帖子详情（含评论）</span></div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,85 @@
+<h2>前端架构方案</h2>
+<p class="subtitle">选择项目的技术架构方向</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>推荐：Pinia + Axios + 模块化 Composables</h3>
+      <p><strong>状态管理：</strong>Pinia（Vue 3 官方推荐，轻量，TypeScript 友好）</p>
+      <p><strong>HTTP：</strong>Axios + 请求/响应拦截器（统一处理 JWT、错误）</p>
+      <p><strong>逻辑复用：</strong>Composables（useFeed, useAuth, usePost 等）</p>
+      <p><strong>Mock 策略：</strong>Axios 拦截器 + 独立 mock 模块，后期切换只需改一个配置</p>
+      <div class="pros-cons">
+        <div class="pros">
+          <h4>Pros</h4>
+          <ul>
+            <li>Pinia 是 Vue 3 生态标准，社区资源丰富</li>
+            <li>Composables 灵活复用逻辑，避免 mixin 的命名冲突</li>
+            <li>Mock 层与业务代码解耦，对接后端时改动最小</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>Cons</h4>
+          <ul>
+            <li>需要手动管理 mock 数据的结构</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>轻量方案：纯 Composables + Fetch</h3>
+      <p><strong>状态管理：</strong>无全局 store，用 provide/inject + composables 管理状态</p>
+      <p><strong>HTTP：</strong>原生 Fetch API，简单封装</p>
+      <p><strong>Mock 策略：</strong>JSON 文件直接 import</p>
+      <div class="pros-cons">
+        <div class="pros">
+          <h4>Pros</h4>
+          <ul>
+            <li>零依赖，最轻量</li>
+            <li>学习成本最低</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>Cons</h4>
+          <ul>
+            <li>全局状态管理复杂时会变得混乱</li>
+            <li>缺少拦截器机制，JWT 处理需要重复代码</li>
+            <li>扩展性差，功能增多后维护成本高</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>全栈方案：MSW (Mock Service Worker)</h3>
+      <p><strong>状态管理：</strong>Pinia</p>
+      <p><strong>HTTP：</strong>Axios</p>
+      <p><strong>Mock 策略：</strong>MSW 拦截网络请求，模拟真实 API 行为</p>
+      <div class="pros-cons">
+        <div class="pros">
+          <h4>Pros</h4>
+          <ul>
+            <li>Mock 在网络层拦截，业务代码完全不感知 mock</li>
+            <li>对接后端时只需关闭 MSW，零代码改动</li>
+            <li>支持模拟延迟、错误等边界情况</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>Cons</h4>
+          <ul>
+            <li>额外学习成本</li>
+            <li>对于简单项目可能过度设计</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
