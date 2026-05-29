@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.sdb.buzzfeed.mapper.postMapper">
+
+    <!-- 插入内容到 item_info 表 -->
+    <insert id="insertoutBox" parameterType="org.sdb.buzzfeed.entity.Content"
+            useGeneratedKeys="true" keyProperty="contentId">
+
+        INSERT INTO item_info
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="publishTime != null">publish_time,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="userId != null">user_id,</if>
+            <if test="shortText != null">short_text,</if>
+            <if test="longText != null">long_text,</if>
+            <if test="photo != null">photo,</if>
+            <if test="video != null">video,</if>
+            <if test="music != null">music,</if>
+            <if test="version != null">version,</if>
+            <if test="status != null">status,</if>
+            <!-- 如果调用时没传时间或状态，这里自动补上 -->
+            <if test="publishTime == null">publish_time,</if>
+            <if test="updateTime == null">update_time,</if>
+            <if test="status == null">status,</if>
+        </trim>
+
+        VALUES
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="publishTime != null">#{publishTime},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="userId != null">#{userId},</if>
+            <if test="shortText != null">#{shortText},</if>
+            <if test="longText != null">#{longText},</if>
+            <if test="photo != null">#{photo},</if>
+            <if test="video != null">#{video},</if>
+            <if test="music != null">#{music},</if>
+            <if test="version != null">#{version},</if>
+            <if test="status != null">#{status},</if>
+            <!-- 自动设置默认值 -->
+            <if test="publishTime == null">NOW(),</if>
+            <if test="updateTime == null">NOW(),</if>
+            <if test="status == null">'draft',</if>
+        </trim>
+    </insert>
+
+</mapper>
