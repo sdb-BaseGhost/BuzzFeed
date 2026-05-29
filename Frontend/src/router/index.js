@@ -67,6 +67,12 @@ const routes = [
     name: 'PostDetail',
     component: () => import('@/views/PostDetail.vue'),
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/compose',
+    name: 'Compose',
+    component: () => import('@/views/Compose.vue'),
+    meta: { requiresAuth: true }
   }
 ]
 

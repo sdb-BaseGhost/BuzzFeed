@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { getUser } from '@/api/user'
 import { useAuthStore } from '@/stores/auth'
 import { useFeed } from '@/composables/useFeed'
@@ -9,10 +9,12 @@ import FollowButton from '@/components/user/FollowButton.vue'
 import FeedItem from '@/components/feed/FeedItem.vue'
 
 const route = useRoute()
+const router = useRouter()
 const authStore = useAuthStore()
 const user = ref(null)
 const loading = ref(true)
 const activeTab = ref('posts')
+const showLogoutConfirm = ref(false)
 
 const { posts, loadFeed } = useFeed()
 
@@ -26,6 +28,12 @@ onMounted(async () => {
     loading.value = false
   }
 })
+
+function confirmLogout() {
+  showLogoutConfirm.value = false
+  authStore.logout()
+  router.push('/login')
+}
 </script>
 
 <template>
@@ -91,6 +99,48 @@ onMounted(async () => {
       </div>
 
       <FeedItem v-for="post in posts" :key="post.postId" :post="post" />
+
+      <!-- 退出登录（仅本人可见） -->
+      <div v-if="isSelf" class="border-t border-border-custom p-4 mt-4">
+        <button
+          class="flex items-center gap-3 px-4 py-3 w-full rounded-lg text-text-secondary hover:text-danger hover:bg-danger/5 transition-colors"
+          @click="showLogoutConfirm = true"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+          </svg>
+          <span class="text-sm font-medium">退出登录</span>
+        </button>
+      </div>
     </div>
+
+    <!-- 退出确认弹窗 -->
+    <Teleport to="body">
+      <div
+        v-if="showLogoutConfirm"
+        class="fixed inset-0 z-50 flex items-center justify-center"
+        @click.self="showLogoutConfirm = false"
+      >
+        <div class="fixed inset-0 bg-white/5 backdrop-blur-sm"></div>
+        <div class="relative bg-bg-secondary border border-border-custom rounded-2xl p-6 w-full max-w-sm mx-4 shadow-xl">
+          <h3 class="text-lg font-bold text-text-primary">退出登录</h3>
+          <p class="mt-2 text-text-secondary text-sm">确定要退出当前账号吗？退出后需要重新登录。</p>
+          <div class="flex gap-3 mt-6 justify-end">
+            <button
+              class="px-5 py-2 rounded-full border border-border-custom text-text-primary text-sm font-medium hover:bg-bg-hover transition-colors"
+              @click="showLogoutConfirm = false"
+            >
+              取消
+            </button>
+            <button
+              class="px-5 py-2 rounded-full bg-danger text-white text-sm font-medium hover:bg-danger/90 transition-colors"
+              @click="confirmLogout"
+            >
+              退出
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>

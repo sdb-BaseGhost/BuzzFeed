@@ -3,26 +3,6 @@ import { mockPosts } from '@/mock/posts'
 import { delay, mockResult, generateId } from '@/mock'
 
 export async function createPost(data) {
-  if (USE_MOCK) {
-    await delay()
-    const newPost = {
-      postId: generateId(),
-      userId: '1',
-      username: 'testuser',
-      displayName: '测试用户',
-      avatar: null,
-      shortText: data.shortText || '',
-      longText: data.longText || '',
-      photos: data.photo ? [data.photo] : [],
-      video: data.video || null,
-      likeCount: 0,
-      commentCount: 0,
-      isLiked: false,
-      publishTime: new Date().toISOString()
-    }
-    mockPosts.unshift(newPost)
-    return mockResult(newPost)
-  }
   return api.post('/post', data)
 }
 

@@ -16,7 +16,7 @@ const canSubmit = computed(() => content.value.trim().length > 0 && !isOverLimit
 
 async function handleSubmit() {
   if (!canSubmit.value) return
-  await publishPost({ shortText: content.value })
+  await publishPost({ creatorId: authStore.currentUser?.userId, shortText: content.value })
   content.value = ''
   isExpanded.value = false
 }
@@ -25,8 +25,8 @@ async function handleSubmit() {
 <template>
   <div class="border-b border-border-custom p-4">
     <div class="flex gap-3">
-      <div class="w-10 h-10 rounded-full bg-accent/20 flex-shrink-0 flex items-center justify-center">
-        <span class="text-sm font-bold">{{ authStore.currentUser?.displayName?.charAt(0) }}</span>
+      <div class="w-10 h-10 rounded-full bg-border-custom flex-shrink-0 flex items-center justify-center text-text-secondary text-xs font-medium">
+        {{ authStore.currentUser?.displayName?.charAt(0) }}
       </div>
 
       <div class="flex-1">
@@ -50,7 +50,7 @@ async function handleSubmit() {
 
           <button
             :disabled="!canSubmit"
-            class="bg-accent text-white px-5 py-1.5 rounded-full font-bold hover:bg-accent/90 transition-colors disabled:opacity-50"
+            class="bg-accent text-white px-5 py-1.5 rounded text-sm font-semibold hover:bg-accent/90 transition-colors disabled:opacity-40"
             @click="handleSubmit"
           >
             {{ loading ? '发布中...' : '发布' }}

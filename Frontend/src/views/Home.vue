@@ -1,7 +1,6 @@
 <script setup>
 import { ref } from 'vue'
 import FeedList from '@/components/feed/FeedList.vue'
-import PostComposer from '@/components/post/PostComposer.vue'
 
 const activeTab = ref('recommend')
 </script>
@@ -32,7 +31,6 @@ const activeTab = ref('recommend')
       </div>
     </header>
 
-    <PostComposer />
     <FeedList :type="activeTab" />
   </div>
 </template>

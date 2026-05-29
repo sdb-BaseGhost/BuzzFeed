@@ -7,12 +7,12 @@ export default {
   theme: {
     extend: {
       colors: {
-        'bg-primary': '#15202b',
-        'bg-secondary': '#192734',
-        'bg-hover': '#1d2f3f',
-        'border-custom': '#38444d',
+        'bg-primary': '#000000',
+        'bg-secondary': '#16181c',
+        'bg-hover': '#1d1f23',
+        'border-custom': '#2f3336',
         'text-primary': '#e7e9ea',
-        'text-secondary': '#536471',
+        'text-secondary': '#71767b',
         'accent': '#1d9bf0',
         'danger': '#f4212e',
         'success': '#00ba7c'

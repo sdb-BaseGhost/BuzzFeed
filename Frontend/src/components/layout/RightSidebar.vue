@@ -16,49 +16,46 @@ const suggestedUsers = ref([
 </script>
 
 <template>
-  <aside class="py-3 pr-6">
-    <div class="sticky top-0 pt-1 pb-3 bg-bg-primary z-10">
-      <div class="relative">
-        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary">🔍</span>
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="搜索"
-          class="w-full bg-bg-secondary border border-transparent focus:border-accent rounded-full py-3 pl-12 pr-4 text-text-primary placeholder-text-secondary outline-none transition-colors"
-        />
-      </div>
+  <aside class="py-4 pr-6">
+    <div class="sticky top-0 pt-0 pb-3 bg-bg-primary z-10">
+      <input
+        v-model="searchQuery"
+        type="text"
+        placeholder="搜索"
+        class="w-full bg-transparent border border-border-custom rounded-lg py-2.5 px-4 text-sm text-text-primary placeholder-text-secondary outline-none focus:border-text-secondary transition-colors"
+      />
     </div>
 
-    <div class="bg-bg-secondary rounded-2xl mt-3 p-4">
-      <h2 class="text-xl font-bold mb-3">热门话题</h2>
+    <div class="mt-4">
+      <h2 class="text-base font-semibold mb-2 px-1">热门话题</h2>
       <div
         v-for="topic in trendingTopics"
         :key="topic.id"
-        class="py-3 hover:bg-bg-hover rounded-lg px-2 cursor-pointer transition-colors"
+        class="py-2.5 px-1 cursor-pointer hover:text-text-primary transition-colors border-b border-border-custom/50 last:border-0"
       >
-        <div class="text-text-secondary text-sm">{{ topic.category }} · 热门</div>
-        <div class="font-bold mt-0.5">{{ topic.title }}</div>
-        <div class="text-text-secondary text-sm mt-0.5">{{ topic.posts }} 条帖子</div>
+        <div class="text-text-secondary text-xs">{{ topic.category }} · 热门</div>
+        <div class="text-sm font-medium mt-0.5 text-text-primary">{{ topic.title }}</div>
+        <div class="text-text-secondary text-xs mt-0.5">{{ topic.posts }} 条帖子</div>
       </div>
     </div>
 
-    <div class="bg-bg-secondary rounded-2xl mt-4 p-4">
-      <h2 class="text-xl font-bold mb-3">推荐关注</h2>
+    <div class="mt-5">
+      <h2 class="text-base font-semibold mb-2 px-1">推荐关注</h2>
       <div
         v-for="user in suggestedUsers"
         :key="user.id"
-        class="flex items-center justify-between py-3"
+        class="flex items-center justify-between py-2.5 px-1 border-b border-border-custom/50 last:border-0"
       >
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center">
-            <span class="text-sm font-bold">{{ user.displayName.charAt(0) }}</span>
+          <div class="w-8 h-8 rounded-full bg-border-custom flex items-center justify-center text-text-secondary text-xs font-medium">
+            {{ user.displayName.charAt(0) }}
           </div>
           <div>
-            <div class="font-bold text-sm">{{ user.displayName }}</div>
-            <div class="text-text-secondary text-sm">@{{ user.username }}</div>
+            <div class="text-sm font-medium text-text-primary">{{ user.displayName }}</div>
+            <div class="text-text-secondary text-xs">@{{ user.username }}</div>
           </div>
         </div>
-        <button class="bg-text-primary text-bg-primary px-4 py-1.5 rounded-full text-sm font-bold hover:bg-text-primary/90 transition-colors">
+        <button class="border border-border-custom text-text-primary px-3 py-1 rounded text-xs font-medium hover:border-text-secondary transition-colors">
           关注
         </button>
       </div>
