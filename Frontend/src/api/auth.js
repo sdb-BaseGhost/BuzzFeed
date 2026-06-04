@@ -7,7 +7,7 @@ export async function login(data) {
     await delay()
     return mockResult(mockLogin(data))
   }
-  return api.post('/auth/login', data)
+  return api.post('/api/auth/login', data)
 }
 
 export async function register(data) {
@@ -15,7 +15,7 @@ export async function register(data) {
     await delay()
     return mockResult(mockRegister(data))
   }
-  return api.post('/auth/register', data)
+  return api.post('/api/auth/register', data)
 }
 
 export async function getCurrentUser() {
@@ -23,5 +23,5 @@ export async function getCurrentUser() {
     await delay()
     return mockResult(mockGetCurrentUser())
   }
-  return api.get('/auth/me')
+  return api.get('/api/auth/me')
 }

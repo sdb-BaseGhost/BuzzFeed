@@ -56,9 +56,6 @@ async function handleSubmit() {
         <router-link to="/register" class="text-accent hover:underline">注册</router-link>
       </p>
 
-      <p class="text-center mt-4 text-text-secondary text-sm">
-        测试账号：testuser / 123456
-      </p>
     </div>
   </div>
 </template>

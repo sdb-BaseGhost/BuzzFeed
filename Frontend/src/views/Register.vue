@@ -6,10 +6,11 @@ const { loading, error, register } = useAuth()
 
 const username = ref('')
 const email = ref('')
+const displayName = ref('')
 const password = ref('')
 
 async function handleSubmit() {
-  await register(username.value, password.value, email.value)
+  await register(username.value, password.value, email.value, displayName.value)
 }
 </script>
 
@@ -26,7 +27,16 @@ async function handleSubmit() {
           <input
             v-model="username"
             type="text"
-            placeholder="用户名"
+            placeholder="用户名 *"
+            required
+            class="w-full bg-bg-secondary border border-border-custom rounded-lg px-4 py-3 text-text-primary placeholder-text-secondary focus:border-accent outline-none transition-colors"
+          />
+        </div>
+        <div>
+          <input
+            v-model="displayName"
+            type="text"
+            placeholder="显示名称（可选）"
             class="w-full bg-bg-secondary border border-border-custom rounded-lg px-4 py-3 text-text-primary placeholder-text-secondary focus:border-accent outline-none transition-colors"
           />
         </div>
@@ -34,7 +44,7 @@ async function handleSubmit() {
           <input
             v-model="email"
             type="email"
-            placeholder="邮箱"
+            placeholder="邮箱（可选）"
             class="w-full bg-bg-secondary border border-border-custom rounded-lg px-4 py-3 text-text-primary placeholder-text-secondary focus:border-accent outline-none transition-colors"
           />
         </div>
@@ -42,7 +52,9 @@ async function handleSubmit() {
           <input
             v-model="password"
             type="password"
-            placeholder="密码"
+            placeholder="密码（至少6位）"
+            required
+            minlength="6"
             class="w-full bg-bg-secondary border border-border-custom rounded-lg px-4 py-3 text-text-primary placeholder-text-secondary focus:border-accent outline-none transition-colors"
           />
         </div>

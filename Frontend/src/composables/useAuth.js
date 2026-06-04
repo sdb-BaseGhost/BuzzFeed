@@ -21,11 +21,11 @@ export function useAuth() {
     }
   }
 
-  async function register(username, password, email) {
+  async function register(username, password, email, displayName) {
     error.value = ''
     loading.value = true
     try {
-      await authStore.register(username, password, email)
+      await authStore.register(username, password, email, displayName)
       router.push('/login')
     } catch (e) {
       error.value = e.message || '注册失败'

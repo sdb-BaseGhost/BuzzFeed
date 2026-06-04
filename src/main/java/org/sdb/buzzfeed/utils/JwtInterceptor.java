@@ -13,12 +13,24 @@ public class JwtInterceptor implements HandlerInterceptor {
     private JwtUtil jwtUtil;
 
     @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        // 放行 OPTIONS 预检请求
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            return true;
+        }
+
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.replace("Bearer ", "");
-            Long userId = jwtUtil.getUserId(token);
-            UserContext.setUserId(userId); // 放到上下文
+            try {
+                if (!JwtUtil.isTokenExpired(token)) {
+                    Long userId = JwtUtil.getUserId(token);
+                    String username = JwtUtil.getUsername(token);
+                    UserContext.set(userId, username);
+                }
+            } catch (Exception e) {
+                // token 无效，不设置上下文
+            }
         }
         return true;
     }
