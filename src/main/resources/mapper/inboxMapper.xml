@@ -15,8 +15,9 @@
 
 <!--    下拉从收件箱中获取feed流-->
     <select id="downFeed" resultType="org.sdb.buzzfeed.entity.Content">
-        SELECT content_id,
-               publish_time
+        SELECT content_id AS item_id,
+               publish_time,
+               user_id AS creator_id
         FROM inbox
         WHERE user_id = #{userId}
           AND publish_time &lt; #{lastTime}
@@ -26,11 +27,12 @@
 
 <!--    上滑从收件箱中获取feed流-->
     <select id="downFeedUp" resultType="org.sdb.buzzfeed.entity.Content">
-        SELECT content_id,
-               publish_time
+        SELECT content_id AS item_id,
+               publish_time,
+               user_id AS creator_id
         FROM inbox
         WHERE user_id = #{userId}
-          AND (publish_time &lt; #{lastTime} OR (publish_time = #{lastTime} AND content_id &lt; #{lastContentId})
+          AND (publish_time &lt; #{lastTime} OR (publish_time = #{lastTime} AND content_id &lt; #{lastContentId}))
         ORDER BY publish_time DESC
             LIMIT #{num}
     </select>

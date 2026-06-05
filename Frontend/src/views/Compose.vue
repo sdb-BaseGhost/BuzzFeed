@@ -3,35 +3,39 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { createPost } from '@/api/post'
-import { uploadImage, uploadVideo } from '@/api/upload'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
+const title = ref('')
 const content = ref('')
-const maxLength = 280
+const maxContentLength = 500
 const mediaFiles = ref([])
 const mediaPreview = ref([])
 const fileInputRef = ref(null)
 const videoInputRef = ref(null)
 const loading = ref(false)
 
-const charCount = computed(() => content.value.length)
-const isOverLimit = computed(() => charCount.value > maxLength)
-const canSubmit = computed(() => (content.value.trim().length > 0 || mediaFiles.value.length > 0) && !isOverLimit.value && !loading.value)
+const hasVideo = computed(() => mediaPreview.value.some(m => m.type === 'video'))
+const hasImages = computed(() => mediaPreview.value.some(m => m.type === 'image'))
+
+const canSubmit = computed(() => {
+  if (title.value.trim().length === 0) return false
+  if (loading.value) return false
+  if (content.value.length > maxContentLength) return false
+  // 至少有文本或媒体
+  return content.value.trim().length > 0 || mediaFiles.value.length > 0
+})
 
 function handleFileSelect(e) {
   const files = Array.from(e.target.files)
   files.forEach(file => {
     if (mediaFiles.value.length >= 9) return
+    if (hasVideo.value) return // 有视频时不允许再加图片
     mediaFiles.value.push(file)
     const reader = new FileReader()
     reader.onload = (ev) => {
-      mediaPreview.value.push({
-        url: ev.target.result,
-        type: 'image',
-        name: file.name
-      })
+      mediaPreview.value.push({ url: ev.target.result, type: 'image', name: file.name })
     }
     reader.readAsDataURL(file)
   })
@@ -41,14 +45,11 @@ function handleFileSelect(e) {
 function handleVideoSelect(e) {
   const file = e.target.files[0]
   if (!file) return
+  if (hasImages.value || hasVideo.value) return // 已有媒体时不允许
   mediaFiles.value.push(file)
   const reader = new FileReader()
   reader.onload = (ev) => {
-    mediaPreview.value.push({
-      url: ev.target.result,
-      type: 'video',
-      name: file.name
-    })
+    mediaPreview.value.push({ url: ev.target.result, type: 'video', name: file.name })
   }
   reader.readAsDataURL(file)
   e.target.value = ''
@@ -63,28 +64,19 @@ async function handleSubmit() {
   if (!canSubmit.value) return
   loading.value = true
   try {
-    const imageUrls = []
-    let videoUrl = null
+    const images = mediaFiles.value.filter((_, i) => mediaPreview.value[i].type === 'image')
+    const videoFile = mediaFiles.value.find((_, i) => mediaPreview.value[i].type === 'video')
 
-    for (let i = 0; i < mediaFiles.value.length; i++) {
-      const file = mediaFiles.value[i]
-      if (mediaPreview.value[i].type === 'video') {
-        const res = await uploadVideo(file)
-        videoUrl = res.data
-      } else {
-        const res = await uploadImage(file)
-        imageUrls.push(res.data)
-      }
-    }
+    const contentType = videoFile ? 2 : (images.length > 0 ? 1 : 0)
 
-    const data = {
-      creatorId: authStore.currentUser?.userId,
-      shortText: content.value,
-      imageUrls: imageUrls.length > 0 ? imageUrls : null,
-      videoUrl: videoUrl
-    }
-
-    await createPost(data)
+    await createPost({
+      contentType,
+      title: title.value.trim(),
+      description: content.value.trim() || undefined,
+      visibility: 1,
+      images: images.length > 0 ? images : undefined,
+      video: videoFile || undefined
+    })
     router.push('/')
   } catch (e) {
     alert('发布失败: ' + (e.message || '未知错误'))
@@ -117,11 +109,16 @@ async function handleSubmit() {
           {{ authStore.currentUser?.displayName?.charAt(0) }}
         </div>
         <div class="flex-1 min-w-0">
+          <input
+            v-model="title"
+            placeholder="标题（必填）"
+            class="w-full bg-transparent text-text-primary text-xl font-semibold placeholder-text-secondary outline-none mb-3 pb-3 border-b border-border-custom"
+            maxlength="128"
+          />
           <textarea
             v-model="content"
-            placeholder="有什么新鲜事？"
-            class="w-full bg-transparent text-text-primary text-lg placeholder-text-secondary outline-none resize-none min-h-[160px]"
-            autofocus
+            placeholder="添加描述..."
+            class="w-full bg-transparent text-text-primary text-lg placeholder-text-secondary outline-none resize-none min-h-[120px]"
           ></textarea>
         </div>
       </div>
@@ -177,9 +174,9 @@ async function handleSubmit() {
 
       <span
         class="text-sm"
-        :class="isOverLimit ? 'text-danger' : charCount > maxLength * 0.9 ? 'text-yellow-500' : 'text-text-secondary'"
+        :class="content.length > maxContentLength ? 'text-danger' : content.length > maxContentLength * 0.9 ? 'text-yellow-500' : 'text-text-secondary'"
       >
-        {{ charCount }}/{{ maxLength }}
+        {{ content.length }}/{{ maxContentLength }}
       </span>
     </div>
   </div>

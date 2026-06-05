@@ -2,8 +2,30 @@ import api, { USE_MOCK } from './index'
 import { mockPosts } from '@/mock/posts'
 import { delay, mockResult, generateId } from '@/mock'
 
-export async function createPost(data) {
-  return api.post('/post', data)
+/**
+ * 发布内容（multipart/form-data，文件和元数据一起提交）
+ * @param {Object} params
+ * @param {number}  params.contentType  1=图文 2=视频
+ * @param {string}  params.title
+ * @param {string}  [params.description]
+ * @param {number}  [params.visibility=1]
+ * @param {File[]}  [params.images]
+ * @param {File}    [params.video]
+ */
+export async function createPost({ contentType, title, description, visibility, images, video }) {
+  const formData = new FormData()
+  formData.append('contentType', contentType)
+  formData.append('title', title)
+  if (description) formData.append('description', description)
+  if (visibility !== undefined) formData.append('visibility', visibility)
+  if (images && images.length > 0) {
+    images.forEach(file => formData.append('images', file))
+  }
+  if (video) formData.append('video', video)
+
+  return api.post('/post', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
 }
 
 export async function toggleLike(postId) {

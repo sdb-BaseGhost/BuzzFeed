@@ -2,77 +2,117 @@ package org.sdb.buzzfeed.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.sdb.buzzfeed.entity.Content;
-import org.sdb.buzzfeed.mapper.inboxMapper;
+import org.sdb.buzzfeed.entity.ContentImage;
+import org.sdb.buzzfeed.entity.ContentVideo;
+import org.sdb.buzzfeed.mapper.ContentImageMapper;
+import org.sdb.buzzfeed.mapper.ContentVideoMapper;
 import org.sdb.buzzfeed.mapper.postMapper;
-import org.sdb.buzzfeed.mapper.userMapper;
+import org.sdb.buzzfeed.service.MinioService;
 import org.sdb.buzzfeed.service.PostService;
-import org.sdb.buzzfeed.util.util;
-import org.springframework.data.redis.core.StringRedisTemplate;
+import org.sdb.buzzfeed.utils.UserContext;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 public class PostServiceImpl implements PostService {
 
-    private final userMapper userMapper;
     private final postMapper postMapper;
-    private final inboxMapper inboxMapper;
-    private final StringRedisTemplate stringRedisTemplate;
+    private final ContentImageMapper contentImageMapper;
+    private final ContentVideoMapper contentVideoMapper;
+    private final MinioService minioService;
+    private final KafkaTemplate<String, String> kafkaTemplate;
+
+    @Value("${minio.bucket-name}")
+    private String bucketName;
+
+    @Value("${minio.endpoint}")
+    private String minioEndpoint;
+
+    private static final String REVIEW_TOPIC = "content-review";
 
     @Override
     @Transactional
-    public Object postContent(Content content) {
-        //1.拿到字段
-        int id = content.getContentId();
-        Long userId = content.getUserId();
-        String shortText = content.getShortText();
-        String longText = content.getLongText();
-        String photo = content.getPhoto();
-        String video = content.getVideo();
-        String music = content.getMusic();
-        String version = content.getVersion();
-        String status = content.getStatus();
-        var publishTime = content.getPublishTime();
-        var updateTime = content.getUpdateTime();
-        //2.判断是否需要送审
-        //  根据userId去数据库查到粉丝量，判断是否超过阈值
-        Integer followerNumber = userMapper.selectFollowsNumber(userId);
-        //3.判断是否需要存储到云服务器
-        //  这里模拟假地址
-        if(video != null){
-            //存到云端
-            //返回一个地址
-            System.out.println("模拟返回地址...");
-        }
-        //4.判断是否需要送审，异步发送到消息队列
-        //5.返回用户发布成功，并根据消息队列的情况显示status
-        //============接下来是消息队列的消费者做的事情=============
-        //1.构建新的Content
-        content.setStatus("发布中");
-        //2.插入到用户的发件箱MySQL->item_info表
-        postMapper.insertoutBox(content);
-        List<Long> fansList = userMapper.selectFollowersByUserId(userId);
-        Boolean isSuccess = false;
-        //3.如果是大V的话
-        if(followerNumber > 1){
-            Map<String, String> mapContent = util.objectToMap(content);
-            //  将发布内容存到Redis中，保证缓存预热和缓存一致性
-            stringRedisTemplate.opsForHash().putAll((Long.toString(userId)),mapContent);
-            //  遍历粉丝列表筛选出活跃粉丝
-            List<Long> activeFans = userMapper.selectActiveFansByIds(fansList);
-            //  批量插入到活跃粉丝的收件箱
-            isSuccess = inboxMapper.insertInbox(activeFans, content.getContentId(),content.getPublishTime());
+    public Object postContent(Integer contentType, String title, String description,
+                               Integer visibility, MultipartFile[] images, MultipartFile video) {
 
-        }else{
-            //4.不是大V的话就直接遍历粉丝列表
-            //  推送到粉丝的收件箱中
-            isSuccess = inboxMapper.insertInbox(fansList, content.getContentId(),content.getPublishTime());
+        // 1. 参数校验
+        if (contentType == null || title == null || title.isBlank()) {
+            throw new RuntimeException("contentType 和 title 不能为空");
         }
-        return content;
+
+        if (contentType == 1) {
+            if (images == null || images.length == 0) {
+                throw new RuntimeException("图文类型至少上传1张图片");
+            }
+            if (images.length > 3) {
+                throw new RuntimeException("最多上传3张图片");
+            }
+        }
+
+        if (contentType == 2) {
+            if (video == null || video.isEmpty()) {
+                throw new RuntimeException("视频类型必须上传视频");
+            }
+        }
+
+        // 2. 生成 item_id（item_info.item_id 非自增）
+        Long itemId = postMapper.getNextItemId();
+
+        // 3. 构建 Content 并插入 item_info
+        Content content = new Content();
+        content.setItemId(itemId);
+        content.setItemType(contentType);
+        content.setTitle(title);
+        content.setSummary(description);
+        content.setVisibility(visibility);
+        content.setStatus(0);   // 待审核
+        content.setCreatorId(UserContext.getUserId());
+
+        postMapper.insertContent(content);
+
+        // 4. 上传文件到 MinIO 并落库
+        try {
+            if (contentType == 1 && images != null) {
+                List<ContentImage> imageList = new ArrayList<>();
+                for (int i = 0; i < images.length; i++) {
+                    String objectName = minioService.upload(images[i], "images");
+                    ContentImage img = new ContentImage();
+                    img.setItemId(itemId);
+                    img.setImageUri(objectName);
+                    img.setSortOrder(i + 1);
+                    imageList.add(img);
+                }
+                contentImageMapper.batchInsert(imageList);
+            }
+
+            if (contentType == 2 && video != null) {
+                String objectName = minioService.upload(video, "videos");
+                String videoUrl = minioEndpoint + "/" + bucketName + "/" + objectName;
+                ContentVideo cv = new ContentVideo();
+                cv.setItemId(itemId);
+                cv.setCreatorId(UserContext.getUserId());
+                cv.setBucketName(bucketName);
+                cv.setObjectName(objectName);
+                cv.setVideoUrl(videoUrl);
+                cv.setDuration(0);
+                cv.setFileSize(video.getSize());
+                contentVideoMapper.insert(cv);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("文件上传失败: " + e.getMessage());
+        }
+
+        // 5. 发送 Kafka 审核消息
+        kafkaTemplate.send(REVIEW_TOPIC, String.valueOf(itemId));
+
+        return itemId;
     }
 }
 

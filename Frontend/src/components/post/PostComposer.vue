@@ -6,17 +6,24 @@ import { usePost } from '@/composables/usePost'
 const authStore = useAuthStore()
 const { loading, publishPost } = usePost()
 
+const title = ref('')
 const content = ref('')
 const isExpanded = ref(false)
-const maxLength = 280
+const maxLength = 500
 
 const charCount = computed(() => content.value.length)
 const isOverLimit = computed(() => charCount.value > maxLength)
-const canSubmit = computed(() => content.value.trim().length > 0 && !isOverLimit.value && !loading.value)
+const canSubmit = computed(() => title.value.trim().length > 0 && !isOverLimit.value && !loading.value)
 
 async function handleSubmit() {
   if (!canSubmit.value) return
-  await publishPost({ creatorId: authStore.currentUser?.userId, shortText: content.value })
+  await publishPost({
+    contentType: 0,
+    title: title.value.trim(),
+    description: content.value.trim() || undefined,
+    visibility: 1
+  })
+  title.value = ''
   content.value = ''
   isExpanded.value = false
 }
@@ -30,9 +37,16 @@ async function handleSubmit() {
       </div>
 
       <div class="flex-1">
+        <input
+          v-model="title"
+          placeholder="标题（必填）"
+          class="w-full bg-transparent text-text-primary text-base font-semibold placeholder-text-secondary outline-none mb-2"
+          maxlength="128"
+          @focus="isExpanded = true"
+        />
         <textarea
           v-model="content"
-          placeholder="有什么新鲜事？"
+          placeholder="添加描述..."
           class="w-full bg-transparent text-text-primary text-lg placeholder-text-secondary outline-none resize-none min-h-[56px]"
           :rows="isExpanded ? 4 : 2"
           @focus="isExpanded = true"

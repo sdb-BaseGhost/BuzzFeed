@@ -58,7 +58,7 @@ public class FeedServiceImpl implements FeedService {
                     feeds = outboxMapper.getContent(Influencer,5);
                 }
                 Map<Long, List<Content>> followMap = feeds.stream()
-                        .collect(Collectors.groupingBy(Content::getUserId));
+                        .collect(Collectors.groupingBy(Content::getCreatorId));
                 //从自己的收件箱中获取feed流，因为普通关注者会直接推送到收件箱
                 List<Content> contents = inboxMapper.downFeed(userId,lastTime,5);
                 //多路归并
@@ -106,7 +106,7 @@ public class FeedServiceImpl implements FeedService {
                     feeds = outboxMapper.getContent(Influencer,5+1);
                 }
                 Map<Long, List<Content>> followMap = feeds.stream()
-                        .collect(Collectors.groupingBy(Content::getUserId));
+                        .collect(Collectors.groupingBy(Content::getCreatorId));
                 //从自己的收件箱中获取feed流，因为普通关注者会直接推送到收件箱
                 List<Content> contents = inboxMapper.downFeed(userId,lastTime,5+1);
                 //多路归并
@@ -119,7 +119,7 @@ public class FeedServiceImpl implements FeedService {
                         //如果拿到的第N+1刚好是卡住的，就移除
                         Content firstContent = list.get(0);
                         //因为展示优先展示时间大的，内容id大的，所以内容id更大的就是已经读过的
-                        if(firstContent.getPublishTime() == lastTime && firstContent.getContentId() >= lastContentId){
+                        if(firstContent.getPublishTime() == lastTime && firstContent.getItemId() >= lastContentId){
                             list.remove(0);
                         }
                         pq.offer(new Node(list.get(0),entry.getKey(),0));

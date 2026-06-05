@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.sdb.buzzfeed.mapper.ContentImageMapper">
+
+    <insert id="batchInsert" parameterType="java.util.List" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO image_info (item_id, image_uri, sort_order, version, status)
+        VALUES
+        <foreach collection="list" item="img" separator=",">
+            (#{img.itemId}, #{img.imageUri}, #{img.sortOrder}, 1, 1)
+        </foreach>
+    </insert>
+
+</mapper>

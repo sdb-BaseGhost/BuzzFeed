@@ -9,7 +9,7 @@ import java.util.List;
 @Mapper
 public interface inboxMapper {
 //    插入用户收件箱
-    Boolean insertInbox(List<Long> activeFans, int contentId, LocalDateTime publishTime);
+    Boolean insertInbox(List<Long> activeFans, Long contentId, LocalDateTime publishTime);
 //    下拉获取feed流
     List<Content> downFeed(Long userId, LocalDateTime lastTime, Integer num);
 

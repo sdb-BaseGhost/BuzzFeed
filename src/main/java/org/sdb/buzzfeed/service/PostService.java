@@ -1,7 +1,8 @@
 package org.sdb.buzzfeed.service;
 
-import org.sdb.buzzfeed.entity.Content;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface PostService {
-    Object postContent(Content content);
+    Object postContent(Integer contentType, String title, String description,
+                       Integer visibility, MultipartFile[] images, MultipartFile video);
 }

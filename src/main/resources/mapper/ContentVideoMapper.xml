@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.sdb.buzzfeed.mapper.ContentVideoMapper">
+
+    <insert id="insert" parameterType="org.sdb.buzzfeed.entity.ContentVideo"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO video_info (item_id, sort_order, version, creator_id, bucket_name, object_name, video_url, duration, file_size, status)
+        VALUES (#{itemId}, 0, 1, #{creatorId}, #{bucketName}, #{objectName}, #{videoUrl}, #{duration}, #{fileSize}, 0)
+    </insert>
+
+</mapper>

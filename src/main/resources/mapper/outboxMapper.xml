@@ -5,11 +5,11 @@
 
 <mapper namespace="org.sdb.buzzfeed.mapper.outboxMapper">
     <select id="getContent" resultType="org.sdb.buzzfeed.entity.Content">
-        SELECT content_id,
-               publish_time,
-               user_id
+        SELECT item_id,
+               creator_id,
+               publish_time
         FROM item_info
-        WHERE user_id in
+        WHERE creator_id in
         <foreach collection="influencer" item="id" open="(" separator="," close=")">
             #{id}
         </foreach>
