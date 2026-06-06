@@ -3,7 +3,7 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="org.sdb.buzzfeed.mapper.userMapper">
+<mapper namespace="org.sdb.buzzfeed.mapper.UserMapper">
 
     <!--获取粉丝数量-->
     <select id="selectFollowsNumber" resultType="java.lang.Integer">

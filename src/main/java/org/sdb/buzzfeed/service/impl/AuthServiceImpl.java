@@ -1,38 +1,39 @@
 package org.sdb.buzzfeed.service.impl;
 
+import lombok.RequiredArgsConstructor;
 import org.sdb.buzzfeed.entity.User;
-import org.sdb.buzzfeed.mapper.userMapper;
+import org.sdb.buzzfeed.entity.dto.LoginDTO;
+import org.sdb.buzzfeed.entity.dto.RegisterDTO;
+import org.sdb.buzzfeed.entity.vo.LoginVO;
+import org.sdb.buzzfeed.entity.vo.RegisterVO;
+import org.sdb.buzzfeed.mapper.UserMapper;
 import org.sdb.buzzfeed.service.AuthService;
 import org.sdb.buzzfeed.utils.JwtUtil;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.Map;
-
 @Service
+@RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
-    @Autowired
-    private userMapper userMapper;
+    private final UserMapper userMapper;
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @Override
-    public Map<String, Object> register(String username, String password, String email, String displayName) {
+    public RegisterVO register(RegisterDTO dto) {
         // 校验用户名唯一
-        User existing = userMapper.selectByUsername(username);
+        User existing = userMapper.selectByUsername(dto.getUsername().trim());
         if (existing != null) {
             throw new RuntimeException("用户名已存在");
         }
 
         // 创建用户
         User user = new User();
-        user.setUsername(username);
-        user.setPasswordHash(passwordEncoder.encode(password));
-        user.setEmail(email);
-        user.setDisplayName(displayName != null ? displayName : username);
+        user.setUsername(dto.getUsername().trim());
+        user.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
+        user.setEmail(dto.getEmail());
+        user.setDisplayName(dto.getDisplayName() != null ? dto.getDisplayName().trim() : dto.getUsername().trim());
         user.setIsActive(true);
         user.setFollowerNumber(0);
         user.setFollowsNumber(0);
@@ -40,13 +41,13 @@ public class AuthServiceImpl implements AuthService {
 
         userMapper.insert(user);
 
-        Map<String, Object> result = new HashMap<>();
-        result.put("userId", user.getUserId());
-        return result;
+        return new RegisterVO(user.getUserId());
     }
 
     @Override
-    public Map<String, Object> login(String username, String password) {
+    public LoginVO login(LoginDTO dto) {
+        String username = dto.getUsername().trim();
+
         // 查找用户
         User user = userMapper.selectByUsername(username);
         if (user == null) {
@@ -54,7 +55,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         // 验证密码
-        if (!passwordEncoder.matches(password, user.getPasswordHash())) {
+        if (!passwordEncoder.matches(dto.getPassword(), user.getPasswordHash())) {
             throw new RuntimeException("用户名或密码错误");
         }
 
@@ -66,13 +67,7 @@ public class AuthServiceImpl implements AuthService {
         // 生成 JWT
         String token = JwtUtil.generateToken(user.getUserId(), user.getUsername());
 
-        Map<String, Object> result = new HashMap<>();
-        result.put("token", token);
-        result.put("userId", user.getUserId());
-        result.put("username", user.getUsername());
-        result.put("displayName", user.getDisplayName());
-        result.put("avatar", user.getAvatar());
-        return result;
+        return new LoginVO(token, user.getUserId(), user.getUsername(), user.getDisplayName(), user.getAvatar());
     }
 
     @Override

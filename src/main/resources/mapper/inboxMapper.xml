@@ -3,7 +3,7 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="org.sdb.buzzfeed.mapper.inboxMapper">
+<mapper namespace="org.sdb.buzzfeed.mapper.InboxMapper">
 <!--    插入用户收件箱-->
     <insert id="insertInbox">
         INSERT INTO inbox (user_id, content_id, publish_time)

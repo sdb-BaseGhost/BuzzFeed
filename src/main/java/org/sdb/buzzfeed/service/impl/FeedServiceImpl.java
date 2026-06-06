@@ -3,9 +3,9 @@ package org.sdb.buzzfeed.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.sdb.buzzfeed.entity.Content;
 import org.sdb.buzzfeed.entity.Feed;
-import org.sdb.buzzfeed.mapper.outboxMapper;
-import org.sdb.buzzfeed.mapper.inboxMapper;
-import org.sdb.buzzfeed.mapper.userMapper;
+import org.sdb.buzzfeed.mapper.OutboxMapper;
+import org.sdb.buzzfeed.mapper.InboxMapper;
+import org.sdb.buzzfeed.mapper.UserMapper;
 import org.sdb.buzzfeed.service.FeedService;
 import org.sdb.buzzfeed.utils.UserContext;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -20,9 +20,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class FeedServiceImpl implements FeedService {
 
-    private final userMapper userMapper;
-    private final outboxMapper outboxMapper;
-    private final inboxMapper inboxMapper;
+    private final UserMapper userMapper;
+    private final OutboxMapper outboxMapper;
+    private final InboxMapper inboxMapper;
     private final RedisTemplate<String, String> redisTemplate;
 
     @Override

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="org.sdb.buzzfeed.mapper.postMapper">
+<mapper namespace="org.sdb.buzzfeed.mapper.PostMapper">
 
     <!-- item_info.item_id 非自增，需要先查最大值+1 -->
     <select id="getNextItemId" resultType="java.lang.Long">

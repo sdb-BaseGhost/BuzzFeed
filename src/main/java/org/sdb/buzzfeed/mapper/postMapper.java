@@ -5,7 +5,7 @@ import org.apache.ibatis.annotations.Param;
 import org.sdb.buzzfeed.entity.Content;
 
 @Mapper
-public interface postMapper {
+public interface PostMapper {
     /** 获取下一个可用的 item_id（item_info.item_id 非自增） */
     Long getNextItemId();
 

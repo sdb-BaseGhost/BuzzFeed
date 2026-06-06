@@ -3,7 +3,7 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="org.sdb.buzzfeed.mapper.outboxMapper">
+<mapper namespace="org.sdb.buzzfeed.mapper.OutboxMapper">
     <select id="getContent" resultType="org.sdb.buzzfeed.entity.Content">
         SELECT item_id,
                creator_id,

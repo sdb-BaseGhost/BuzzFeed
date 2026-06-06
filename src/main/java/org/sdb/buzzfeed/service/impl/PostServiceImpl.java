@@ -6,7 +6,7 @@ import org.sdb.buzzfeed.entity.ContentImage;
 import org.sdb.buzzfeed.entity.ContentVideo;
 import org.sdb.buzzfeed.mapper.ContentImageMapper;
 import org.sdb.buzzfeed.mapper.ContentVideoMapper;
-import org.sdb.buzzfeed.mapper.postMapper;
+import org.sdb.buzzfeed.mapper.PostMapper;
 import org.sdb.buzzfeed.service.MinioService;
 import org.sdb.buzzfeed.service.PostService;
 import org.sdb.buzzfeed.utils.UserContext;
@@ -23,7 +23,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PostServiceImpl implements PostService {
 
-    private final postMapper postMapper;
+    private final PostMapper postMapper;
     private final ContentImageMapper contentImageMapper;
     private final ContentVideoMapper contentVideoMapper;
     private final MinioService minioService;

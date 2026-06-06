@@ -3,12 +3,13 @@ package org.sdb.buzzfeed.utils;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import org.springframework.stereotype.Component;
-
 import java.util.Date;
 
-@Component
-public class JwtUtil {
+public final class JwtUtil {
+
+    private JwtUtil() {
+        // 工具类，禁止实例化
+    }
     // 你的秘钥（建议放到配置文件里）
     private static final String SECRET_KEY = "BuzzFeedMySecretKeyForJWTToken2024SecureEnough256bits";
 

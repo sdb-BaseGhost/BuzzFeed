@@ -1,21 +1,24 @@
 package org.sdb.buzzfeed.service;
 
 import org.sdb.buzzfeed.entity.User;
-import java.util.Map;
+import org.sdb.buzzfeed.entity.dto.LoginDTO;
+import org.sdb.buzzfeed.entity.dto.RegisterDTO;
+import org.sdb.buzzfeed.entity.vo.LoginVO;
+import org.sdb.buzzfeed.entity.vo.RegisterVO;
 
 public interface AuthService {
 
     /**
      * 用户注册
-     * @return 包含 userId 的 Map
+     * @return 注册结果
      */
-    Map<String, Object> register(String username, String password, String email, String displayName);
+    RegisterVO register(RegisterDTO dto);
 
     /**
      * 用户登录
-     * @return 包含 token 和用户信息的 Map
+     * @return 登录结果（包含 token）
      */
-    Map<String, Object> login(String username, String password);
+    LoginVO login(LoginDTO dto);
 
     /**
      * 获取当前登录用户的完整信息

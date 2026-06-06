@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Mapper
-public interface inboxMapper {
+public interface InboxMapper {
 //    插入用户收件箱
     Boolean insertInbox(List<Long> activeFans, Long contentId, LocalDateTime publishTime);
 //    下拉获取feed流

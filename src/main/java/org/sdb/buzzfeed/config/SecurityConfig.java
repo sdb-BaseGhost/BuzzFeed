@@ -23,6 +23,9 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+    /**
+     * CORS 统一由 Spring Security 管理（Filter 级别，优先于 WebMvc Interceptor）
+     */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();

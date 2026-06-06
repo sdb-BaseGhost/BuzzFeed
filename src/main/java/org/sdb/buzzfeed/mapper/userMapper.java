@@ -6,7 +6,7 @@ import org.sdb.buzzfeed.entity.User;
 import java.util.List;
 
 @Mapper
-public interface userMapper {
+public interface UserMapper {
     List<Long> selectFollowsByUserId(Long userId);
 
     List<Long> selectFollowersByUserId(Long userId);

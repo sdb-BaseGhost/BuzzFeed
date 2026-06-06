@@ -2,7 +2,7 @@ package org.sdb.buzzfeed.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.sdb.buzzfeed.mapper.postMapper;
+import org.sdb.buzzfeed.mapper.PostMapper;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class KafkaConsumerService {
 
-    private final postMapper postMapper;
+    private final PostMapper postMapper;
 
     @KafkaListener(topics = "content-review", groupId = "content-review-group")
     public void consumeContentReview(String contentIdStr) {
