@@ -35,5 +35,10 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('token')
   }
 
+  // 页面刷新后，如果有 token 则自动恢复用户信息
+  if (token.value) {
+    fetchCurrentUser()
+  }
+
   return { token, currentUser, isLoggedIn, login, register, fetchCurrentUser, logout }
 })

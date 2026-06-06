@@ -9,7 +9,7 @@ export async function getUser(userId) {
     if (!user) throw new Error('用户不存在')
     return mockResult(user)
   }
-  return api.get(`/user/${userId}`)
+  return api.get(`/api/user/${userId}`)
 }
 
 export async function followUser(userId) {
@@ -17,7 +17,7 @@ export async function followUser(userId) {
     await delay()
     return mockResult({ isFollowing: true })
   }
-  return api.post(`/user/${userId}/follow`)
+  return api.post(`/api/user/${userId}/follow`)
 }
 
 export async function unfollowUser(userId) {
@@ -25,5 +25,5 @@ export async function unfollowUser(userId) {
     await delay()
     return mockResult({ isFollowing: false })
   }
-  return api.delete(`/user/${userId}/follow`)
+  return api.delete(`/api/user/${userId}/follow`)
 }

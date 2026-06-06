@@ -1,10 +1,14 @@
 <script setup>
+import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import UserProfileModal from '@/components/user/UserProfileModal.vue'
 
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
+
+const showProfileModal = ref(false)
 
 const navItems = [
   { label: '首页', icon: 'home', path: '/' },
@@ -49,10 +53,10 @@ const icons = {
     </button>
 
     <div class="mt-auto">
-      <router-link
+      <button
         v-if="authStore.currentUser"
-        :to="`/profile/${authStore.currentUser.userId}`"
-        class="flex items-center justify-center lg:justify-start gap-3 px-3 py-2.5 rounded-lg hover:bg-bg-hover/50 transition-colors"
+        class="flex items-center justify-center lg:justify-start gap-3 px-3 py-2.5 rounded-lg hover:bg-bg-hover/50 transition-colors w-full"
+        @click="showProfileModal = true"
       >
         <div class="w-8 h-8 rounded-full bg-border-custom flex items-center justify-center text-text-secondary text-xs font-medium">
           {{ authStore.currentUser.username?.charAt(0)?.toUpperCase() }}
@@ -61,7 +65,14 @@ const icons = {
           <div class="text-sm font-medium text-text-primary truncate">{{ authStore.currentUser.username }}</div>
           <div class="text-text-secondary text-xs truncate">@{{ authStore.currentUser.username }}</div>
         </div>
-      </router-link>
+      </button>
     </div>
+
+    <!-- 个人资料弹窗 -->
+    <UserProfileModal
+      :show="showProfileModal"
+      :user-id="authStore.currentUser?.userId"
+      @close="showProfileModal = false"
+    />
   </nav>
 </template>

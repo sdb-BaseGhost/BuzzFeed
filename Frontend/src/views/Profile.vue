@@ -13,21 +13,28 @@ const router = useRouter()
 const authStore = useAuthStore()
 const user = ref(null)
 const loading = ref(true)
+const loadError = ref(false)
 const activeTab = ref('posts')
 const showLogoutConfirm = ref(false)
 
 const { posts, loadFeed } = useFeed()
 
-const isSelf = computed(() => authStore.currentUser?.userId === route.params.userId)
+const isSelf = computed(() => authStore.currentUser?.userId == route.params.userId)
 
-onMounted(async () => {
+async function loadUser() {
+  loading.value = true
+  loadError.value = false
   try {
     const res = await getUser(route.params.userId)
     user.value = res.data
+  } catch {
+    loadError.value = true
   } finally {
     loading.value = false
   }
-})
+}
+
+onMounted(loadUser)
 
 function confirmLogout() {
   showLogoutConfirm.value = false
@@ -48,12 +55,28 @@ function confirmLogout() {
 
     <div v-if="loading" class="p-8 text-center text-text-secondary">加载中...</div>
 
+    <div v-else-if="loadError" class="p-8 text-center text-text-secondary">
+      <p>加载用户信息失败，请稍后重试</p>
+      <button class="mt-4 px-4 py-2 border border-border-custom rounded-full text-sm hover:bg-bg-hover transition-colors" @click="loadUser">
+        重新加载
+      </button>
+    </div>
+
     <div v-else-if="user">
+      <!-- 封面图 -->
       <div class="h-48 bg-bg-secondary"></div>
 
+      <!-- 头像区域 -->
       <div class="px-4 pb-4">
-        <div class="flex justify-between items-end -mt-12 mb-3">
-          <UserAvatar :username="user.username" size="xl" />
+        <div class="flex justify-between items-end -mt-14 mb-4">
+          <!-- 圆形头像 + 白色边框 -->
+          <div class="w-28 h-28 rounded-full bg-bg-primary p-[4px] ring-4 ring-bg-primary shadow-lg">
+            <div
+              class="w-full h-full rounded-full bg-accent/20 flex items-center justify-center text-4xl font-bold text-accent"
+            >
+              {{ user.username?.charAt(0)?.toUpperCase() }}
+            </div>
+          </div>
           <FollowButton
             v-if="!isSelf"
             :user-id="user.userId"
@@ -62,12 +85,18 @@ function confirmLogout() {
         </div>
 
         <h2 class="text-xl font-bold">{{ user.displayName }}</h2>
-        <p class="text-text-secondary">@{{ user.username }}</p>
-        <p v-if="user.bio" class="mt-2 text-text-primary">{{ user.bio }}</p>
+        <p class="text-text-secondary text-sm">@{{ user.username }}</p>
+        <p v-if="user.bio" class="mt-3 text-text-primary text-sm leading-relaxed">{{ user.bio }}</p>
 
-        <div class="flex gap-4 mt-3 text-sm">
-          <span><strong>{{ user.followingCount }}</strong> <span class="text-text-secondary">关注</span></span>
-          <span><strong>{{ user.followerCount }}</strong> <span class="text-text-secondary">粉丝</span></span>
+        <div class="flex gap-5 mt-3 text-sm">
+          <span class="cursor-pointer hover:underline">
+            <strong class="text-text-primary">{{ user.followsNumber ?? 0 }}</strong>
+            <span class="text-text-secondary">关注</span>
+          </span>
+          <span class="cursor-pointer hover:underline">
+            <strong class="text-text-primary">{{ user.followerNumber ?? 0 }}</strong>
+            <span class="text-text-secondary">粉丝</span>
+          </span>
         </div>
       </div>
 
@@ -101,9 +130,9 @@ function confirmLogout() {
       <FeedItem v-for="post in posts" :key="post.postId" :post="post" />
 
       <!-- 退出登录（仅本人可见） -->
-      <div v-if="isSelf" class="border-t border-border-custom p-4 mt-4">
+      <div v-if="isSelf" class="border-t border-border-custom px-4 py-3 mt-6 mb-8">
         <button
-          class="flex items-center gap-3 px-4 py-3 w-full rounded-lg text-text-secondary hover:text-danger hover:bg-danger/5 transition-colors"
+          class="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-text-secondary hover:text-danger hover:bg-danger/10 transition-colors"
           @click="showLogoutConfirm = true"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
