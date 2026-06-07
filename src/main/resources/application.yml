@@ -1,6 +1,8 @@
 spring:
   kafka:
     bootstrap-servers: localhost:9092
+    admin:
+      auto-create: true
     consumer:
       group-id: test-group
       auto-offset-reset: earliest
@@ -47,3 +49,7 @@ minio:
   access-key: minioadmin
   secret-key: minioadmin
   bucket-name: buzzfeed
+
+feed:
+  active-days: 7
+  big-v-threshold: 2

@@ -17,4 +17,19 @@
         limit #{num}
     </select>
 
+    <select id="getContentByCreator" resultType="org.sdb.buzzfeed.entity.Content">
+        SELECT item_id,
+               creator_id,
+               publish_time,
+               item_type AS itemType,
+               title,
+               summary,
+               visibility,
+               status
+        FROM item_info
+        WHERE creator_id = #{creatorId} AND status = 1
+        ORDER BY publish_time DESC
+        LIMIT #{num}
+    </select>
+
 </mapper>

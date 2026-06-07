@@ -12,6 +12,24 @@ export async function getUser(userId) {
   return api.get(`/api/user/${userId}`)
 }
 
+export async function getFollowing(userId) {
+  if (USE_MOCK) {
+    await delay()
+    const list = Object.values(mockUsers).filter(u => u.userId !== String(userId))
+    return mockResult(list)
+  }
+  return api.get(`/api/user/${userId}/following`)
+}
+
+export async function getFollowers(userId) {
+  if (USE_MOCK) {
+    await delay()
+    const list = Object.values(mockUsers).filter(u => u.userId !== String(userId))
+    return mockResult(list)
+  }
+  return api.get(`/api/user/${userId}/followers`)
+}
+
 export async function followUser(userId) {
   if (USE_MOCK) {
     await delay()

@@ -13,27 +13,39 @@
         </foreach>
     </insert>
 
-<!--    下拉从收件箱中获取feed流-->
+<!--    下拉从收件箱中获取feed流（JOIN item_info 获取内容详情和真实创作者）-->
     <select id="downFeed" resultType="org.sdb.buzzfeed.entity.Content">
-        SELECT content_id AS item_id,
-               publish_time,
-               user_id AS creator_id
-        FROM inbox
-        WHERE user_id = #{userId}
-          AND publish_time &lt; #{lastTime}
-        ORDER BY publish_time DESC
+        SELECT i.content_id AS item_id,
+               i.publish_time,
+               c.creator_id,
+               c.item_type AS itemType,
+               c.title,
+               c.summary,
+               c.visibility,
+               c.status
+        FROM inbox i
+        LEFT JOIN item_info c ON i.content_id = c.item_id
+        WHERE i.user_id = #{userId}
+          AND i.publish_time &lt; #{lastTime}
+        ORDER BY i.publish_time DESC
             LIMIT #{num}
     </select>
 
-<!--    上滑从收件箱中获取feed流-->
+<!--    上滑从收件箱中获取feed流（JOIN item_info 获取内容详情和真实创作者）-->
     <select id="downFeedUp" resultType="org.sdb.buzzfeed.entity.Content">
-        SELECT content_id AS item_id,
-               publish_time,
-               user_id AS creator_id
-        FROM inbox
-        WHERE user_id = #{userId}
-          AND (publish_time &lt; #{lastTime} OR (publish_time = #{lastTime} AND content_id &lt; #{lastContentId}))
-        ORDER BY publish_time DESC
+        SELECT i.content_id AS item_id,
+               i.publish_time,
+               c.creator_id,
+               c.item_type AS itemType,
+               c.title,
+               c.summary,
+               c.visibility,
+               c.status
+        FROM inbox i
+        LEFT JOIN item_info c ON i.content_id = c.item_id
+        WHERE i.user_id = #{userId}
+          AND (i.publish_time &lt; #{lastTime} OR (i.publish_time = #{lastTime} AND i.content_id &lt; #{lastContentId}))
+        ORDER BY i.publish_time DESC
             LIMIT #{num}
     </select>
 

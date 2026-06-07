@@ -95,14 +95,14 @@ function confirmLogout() {
 
               <!-- 关注/粉丝 -->
               <div class="flex gap-5 mt-4 text-sm">
-                <span>
+                <router-link :to="`/profile/${user.userId}/following`" @click="emit('close')">
                   <strong class="text-text-primary">{{ user.followsNumber ?? 0 }}</strong>
                   <span class="text-text-secondary ml-1">关注</span>
-                </span>
-                <span>
+                </router-link>
+                <router-link :to="`/profile/${user.userId}/followers`" @click="emit('close')">
                   <strong class="text-text-primary">{{ user.followerNumber ?? 0 }}</strong>
                   <span class="text-text-secondary ml-1">粉丝</span>
-                </span>
+                </router-link>
               </div>
             </div>
 

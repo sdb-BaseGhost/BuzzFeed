@@ -17,7 +17,7 @@ public interface UserMapper {
 
     Integer selectFollowsNumber(Long userId);
 
-    List<Long> selectVbyId(List<Long> follows);
+    List<Long> selectVbyId(@Param("follows") List<Long> follows);
 
     @Select("SELECT * FROM user WHERE username = #{username}")
     User selectByUsername(@Param("username") String username);
@@ -29,4 +29,6 @@ public interface UserMapper {
             "VALUES (#{username}, #{passwordHash}, #{email}, #{displayName}, #{isActive}, #{followerNumber}, #{followsNumber}, #{postCount})")
     @Options(useGeneratedKeys = true, keyProperty = "userId", keyColumn = "user_id")
     int insert(User user);
+
+    Integer selectFansCount(@Param("userId") Long userId);
 }

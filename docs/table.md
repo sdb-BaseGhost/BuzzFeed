@@ -67,3 +67,23 @@ PRIMARY KEY (`id`),
 KEY `idx_creator_id` (`creator_id`),
 KEY `idx_creator_status_ctime` (`creator_id`,`status`,`create_time`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='视频资源表';
+
+CREATE TABLE `user_follow` (
+`id` bigint NOT NULL AUTO_INCREMENT,
+`user_id` bigint NOT NULL,
+`follow_user_id` bigint NOT NULL,
+`create_time` datetime DEFAULT CURRENT_TIMESTAMP,
+PRIMARY KEY (`id`),
+UNIQUE KEY `uniq_user_follow` (`user_id`,`follow_user_id`),
+KEY `idx_user_id` (`user_id`),
+KEY `idx_follow_user_id` (`follow_user_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=100001 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE `inbox` (
+`id` bigint NOT NULL AUTO_INCREMENT COMMENT '自增主键，无特殊含义',
+`user_id` bigint NOT NULL COMMENT '用户id',
+`content_id` bigint NOT NULL COMMENT '内容id',
+`publish_time` date NOT NULL COMMENT '内容发布时间',
+PRIMARY KEY (`id`),
+KEY `idx_user_publish_content` (`user_id`,`publish_time`,`content_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1740019 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

@@ -89,14 +89,14 @@ function confirmLogout() {
         <p v-if="user.bio" class="mt-3 text-text-primary text-sm leading-relaxed">{{ user.bio }}</p>
 
         <div class="flex gap-5 mt-3 text-sm">
-          <span class="cursor-pointer hover:underline">
+          <router-link :to="`/profile/${user.userId}/following`" class="cursor-pointer hover:underline">
             <strong class="text-text-primary">{{ user.followsNumber ?? 0 }}</strong>
             <span class="text-text-secondary">关注</span>
-          </span>
-          <span class="cursor-pointer hover:underline">
+          </router-link>
+          <router-link :to="`/profile/${user.userId}/followers`" class="cursor-pointer hover:underline">
             <strong class="text-text-primary">{{ user.followerNumber ?? 0 }}</strong>
             <span class="text-text-secondary">粉丝</span>
-          </span>
+          </router-link>
         </div>
       </div>
 

@@ -1,0 +1,1 @@
+ALTER TABLE inbox MODIFY COLUMN publish_time datetime(3) NOT NULL COMMENT '内容发布时间';

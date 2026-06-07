@@ -1,6 +1,7 @@
 package org.sdb.buzzfeed.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.sdb.buzzfeed.entity.User;
 import org.sdb.buzzfeed.entity.dto.LoginDTO;
 import org.sdb.buzzfeed.entity.dto.RegisterDTO;
@@ -12,11 +13,14 @@ import org.sdb.buzzfeed.utils.JwtUtil;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.concurrent.TimeUnit;
+
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
     private final UserMapper userMapper;
+    private final RedisTemplate<String, String> redisTemplate;
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -63,6 +67,9 @@ public class AuthServiceImpl implements AuthService {
         if (user.getIsActive() == null || !user.getIsActive()) {
             throw new RuntimeException("账号已被禁用");
         }
+
+        // 登录成功，写入 Redis 活跃标记
+        redisTemplate.opsForValue().set("active:user:" + user.getUserId(), "1", 7, TimeUnit.DAYS);
 
         // 生成 JWT
         String token = JwtUtil.generateToken(user.getUserId(), user.getUsername());

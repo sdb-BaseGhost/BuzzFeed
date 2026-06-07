@@ -14,4 +14,10 @@ public interface PostMapper {
 
     /** 更新内容状态（审核结果） */
     void updateState(@Param("itemId") Long itemId, @Param("status") Integer status);
+
+    /** 审核通过：更新状态 + 写入发布时间 */
+    void approveContent(@Param("itemId") Long itemId, @Param("status") Integer status);
+
+    /** 根据ID查询内容 */
+    Content selectById(@Param("itemId") Long itemId);
 }

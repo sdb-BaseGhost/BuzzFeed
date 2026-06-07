@@ -17,4 +17,19 @@
         UPDATE item_info SET status = #{status}, update_time = NOW() WHERE item_id = #{itemId}
     </update>
 
+    <update id="approveContent">
+        UPDATE item_info
+        SET status = #{status},
+            publish_time = NOW(3),
+            update_time = NOW(3)
+        WHERE item_id = #{itemId} AND status = 0
+    </update>
+
+    <select id="selectById" resultType="org.sdb.buzzfeed.entity.Content">
+        SELECT item_id, creator_id, item_type, title, summary, visibility,
+               status, create_time, publish_time, update_time
+        FROM item_info
+        WHERE item_id = #{itemId}
+    </select>
+
 </mapper>

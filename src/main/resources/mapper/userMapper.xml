@@ -13,7 +13,7 @@
     </select>
 
     <!-- 查询某个用户关注的所有用户ID -->
-    <select id="selectFollowsByUserId" resultType="java.lang.String">
+    <select id="selectFollowsByUserId" resultType="java.lang.Long">
         SELECT follow_user_id
         FROM user_follow
         WHERE user_id = #{userId}
@@ -47,7 +47,7 @@
     </select>
 
 <!--    筛选出大V-->
-    <select id="selectVbyId" resultType="java.lang.String">
+    <select id="selectVbyId" resultType="java.lang.Long">
         SELECT user_id
         FROM user
         where user_id IN
@@ -55,5 +55,12 @@
             #{id}
         </foreach>
         AND follower_number > 2
+    </select>
+
+<!--    查询粉丝数量-->
+    <select id="selectFansCount" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM user_follow
+        WHERE follow_user_id = #{userId}
     </select>
 </mapper>

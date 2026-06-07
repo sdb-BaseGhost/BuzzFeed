@@ -17,7 +17,7 @@ api.interceptors.request.use(config => {
 api.interceptors.response.use(
   response => {
     const { code, msg, data } = response.data
-    if (code !== 1) {
+    if (code !== 200) {
       return Promise.reject(new Error(msg || '请求失败'))
     }
     return { code, msg, data }
