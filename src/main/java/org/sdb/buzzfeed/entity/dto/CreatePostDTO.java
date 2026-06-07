@@ -2,7 +2,8 @@ package org.sdb.buzzfeed.entity.dto;
 
 import jakarta.validation.constraints.*;
 import lombok.Data;
-import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 /**
  * 发布内容请求参数
@@ -10,8 +11,8 @@ import org.springframework.web.multipart.MultipartFile;
  * contentType 取值：
  * <ul>
  *   <li>0 — 纯文本</li>
- *   <li>1 — 图文（需上传 1~3 张图片）</li>
- *   <li>2 — 视频（需上传视频文件）</li>
+ *   <li>1 — 图文（需提前上传 1~3 张图片，传入 URL）</li>
+ *   <li>2 — 视频（需提前上传视频，传入 URL）</li>
  * </ul>
  */
 @Data
@@ -35,9 +36,9 @@ public class CreatePostDTO {
     /** 可见范围：0私密 1好友 2粉丝 3公开，默认 1 */
     private Integer visibility = 1;
 
-    /** 图文类型：图片文件数组（1~3 张） */
-    private MultipartFile[] images;
+    /** 图文类型：已上传的图片 URL 列表（1~3 张） */
+    private List<String> imageUrls;
 
-    /** 视频类型：视频文件 */
-    private MultipartFile video;
+    /** 视频类型：已上传的视频 URL */
+    private String videoUrl;
 }

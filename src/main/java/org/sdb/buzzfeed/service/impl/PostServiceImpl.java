@@ -9,14 +9,12 @@ import org.sdb.buzzfeed.entity.vo.CreatePostVO;
 import org.sdb.buzzfeed.mapper.ContentImageMapper;
 import org.sdb.buzzfeed.mapper.ContentVideoMapper;
 import org.sdb.buzzfeed.mapper.PostMapper;
-import org.sdb.buzzfeed.service.MinioService;
 import org.sdb.buzzfeed.service.PostService;
 import org.sdb.buzzfeed.utils.UserContext;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +26,6 @@ public class PostServiceImpl implements PostService {
     private final PostMapper postMapper;
     private final ContentImageMapper contentImageMapper;
     private final ContentVideoMapper contentVideoMapper;
-    private final MinioService minioService;
     private final KafkaTemplate<String, String> kafkaTemplate;
 
     @Value("${minio.bucket-name}")
@@ -43,21 +40,21 @@ public class PostServiceImpl implements PostService {
     @Transactional
     public CreatePostVO postContent(CreatePostDTO dto) {
         Integer contentType = dto.getContentType();
-        MultipartFile[] images = dto.getImages();
-        MultipartFile video = dto.getVideo();
+        List<String> imageUrls = dto.getImageUrls();
+        String videoUrl = dto.getVideoUrl();
 
         // 1. 业务规则校验（@Valid 已覆盖基础字段校验）
         if (contentType == 1) {
-            if (images == null || images.length == 0) {
+            if (imageUrls == null || imageUrls.isEmpty()) {
                 throw new RuntimeException("图文类型至少上传1张图片");
             }
-            if (images.length > 3) {
+            if (imageUrls.size() > 3) {
                 throw new RuntimeException("最多上传3张图片");
             }
         }
 
         if (contentType == 2) {
-            if (video == null || video.isEmpty()) {
+            if (videoUrl == null || videoUrl.isBlank()) {
                 throw new RuntimeException("视频类型必须上传视频");
             }
         }
@@ -77,36 +74,33 @@ public class PostServiceImpl implements PostService {
 
         postMapper.insertContent(content);
 
-        // 4. 上传文件到 MinIO 并落库
-        try {
-            if (contentType == 1 && images != null) {
-                List<ContentImage> imageList = new ArrayList<>();
-                for (int i = 0; i < images.length; i++) {
-                    String objectName = minioService.upload(images[i], "images");
-                    ContentImage img = new ContentImage();
-                    img.setItemId(itemId);
-                    img.setImageUri(objectName);
-                    img.setSortOrder(i + 1);
-                    imageList.add(img);
-                }
-                contentImageMapper.batchInsert(imageList);
+        // 4. 根据已上传的 URL 落库（文件已在 UploadController 阶段传到 MinIO）
+        if (contentType == 1 && imageUrls != null) {
+            List<ContentImage> imageList = new ArrayList<>();
+            String prefix = minioEndpoint + "/" + bucketName + "/";
+            for (int i = 0; i < imageUrls.size(); i++) {
+                String url = imageUrls.get(i);
+                ContentImage img = new ContentImage();
+                img.setItemId(itemId);
+                img.setImageUri(url.startsWith(prefix) ? url.substring(prefix.length()) : url);
+                img.setSortOrder(i + 1);
+                imageList.add(img);
             }
+            contentImageMapper.batchInsert(imageList);
+        }
 
-            if (contentType == 2 && video != null) {
-                String objectName = minioService.upload(video, "videos");
-                String videoUrl = minioEndpoint + "/" + bucketName + "/" + objectName;
-                ContentVideo cv = new ContentVideo();
-                cv.setItemId(itemId);
-                cv.setCreatorId(UserContext.getUserId());
-                cv.setBucketName(bucketName);
-                cv.setObjectName(objectName);
-                cv.setVideoUrl(videoUrl);
-                cv.setDuration(0);
-                cv.setFileSize(video.getSize());
-                contentVideoMapper.insert(cv);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("文件上传失败: " + e.getMessage());
+        if (contentType == 2 && videoUrl != null) {
+            String prefix = minioEndpoint + "/" + bucketName + "/";
+            String objectName = videoUrl.startsWith(prefix) ? videoUrl.substring(prefix.length()) : videoUrl;
+            ContentVideo cv = new ContentVideo();
+            cv.setItemId(itemId);
+            cv.setCreatorId(UserContext.getUserId());
+            cv.setBucketName(bucketName);
+            cv.setObjectName(objectName);
+            cv.setVideoUrl(videoUrl);
+            cv.setDuration(0);
+            cv.setFileSize(0L);
+            contentVideoMapper.insert(cv);
         }
 
         // 5. 发送 Kafka 审核消息

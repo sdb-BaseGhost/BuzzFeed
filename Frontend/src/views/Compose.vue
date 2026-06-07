@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { createPost } from '@/api/post'
+import { uploadImage, uploadVideo } from '@/api/upload'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -10,72 +11,92 @@ const authStore = useAuthStore()
 const title = ref('')
 const content = ref('')
 const maxContentLength = 500
-const mediaFiles = ref([])
-const mediaPreview = ref([])
+
+// 已上传的媒体文件（含远程 URL）
+const uploadedImages = ref([])   // [{ url, objectName, name }]
+const uploadedVideo = ref(null)  // { url, objectName, name }
+
 const fileInputRef = ref(null)
 const videoInputRef = ref(null)
 const loading = ref(false)
+const uploading = ref(false)
 
-const hasVideo = computed(() => mediaPreview.value.some(m => m.type === 'video'))
-const hasImages = computed(() => mediaPreview.value.some(m => m.type === 'image'))
+const hasVideo = computed(() => uploadedVideo.value !== null)
+const hasImages = computed(() => uploadedImages.value.length > 0)
 
 const canSubmit = computed(() => {
   if (title.value.trim().length === 0) return false
-  if (loading.value) return false
+  if (loading.value || uploading.value) return false
   if (content.value.length > maxContentLength) return false
-  // 至少有文本或媒体
-  return content.value.trim().length > 0 || mediaFiles.value.length > 0
+  return content.value.trim().length > 0 || hasImages.value || hasVideo.value
 })
 
-function handleFileSelect(e) {
+async function handleFileSelect(e) {
   const files = Array.from(e.target.files)
-  files.forEach(file => {
-    if (mediaFiles.value.length >= 9) return
-    if (hasVideo.value) return // 有视频时不允许再加图片
-    mediaFiles.value.push(file)
-    const reader = new FileReader()
-    reader.onload = (ev) => {
-      mediaPreview.value.push({ url: ev.target.result, type: 'image', name: file.name })
+  if (!files.length) return
+
+  // 互斥：选图片时清除已有的视频
+  if (hasVideo.value) {
+    uploadedVideo.value = null
+  }
+
+  uploading.value = true
+  try {
+    for (const file of files) {
+      if (uploadedImages.value.length >= 3) break
+      const res = await uploadImage(file)
+      uploadedImages.value.push({ url: res.data.url, objectName: res.data.objectName, name: file.name })
     }
-    reader.readAsDataURL(file)
-  })
-  e.target.value = ''
+  } catch (err) {
+    alert('图片上传失败: ' + (err.message || '未知错误'))
+  } finally {
+    uploading.value = false
+    e.target.value = ''
+  }
 }
 
-function handleVideoSelect(e) {
+async function handleVideoSelect(e) {
   const file = e.target.files[0]
   if (!file) return
-  if (hasImages.value || hasVideo.value) return // 已有媒体时不允许
-  mediaFiles.value.push(file)
-  const reader = new FileReader()
-  reader.onload = (ev) => {
-    mediaPreview.value.push({ url: ev.target.result, type: 'video', name: file.name })
+
+  // 互斥：选视频时清除已有的图片
+  if (hasImages.value) {
+    uploadedImages.value = []
   }
-  reader.readAsDataURL(file)
-  e.target.value = ''
+
+  uploading.value = true
+  try {
+    const res = await uploadVideo(file)
+    uploadedVideo.value = { url: res.data.url, objectName: res.data.objectName, name: file.name }
+  } catch (err) {
+    alert('视频上传失败: ' + (err.message || '未知错误'))
+  } finally {
+    uploading.value = false
+    e.target.value = ''
+  }
 }
 
-function removeMedia(index) {
-  mediaFiles.value.splice(index, 1)
-  mediaPreview.value.splice(index, 1)
+function removeImage(index) {
+  uploadedImages.value.splice(index, 1)
+}
+
+function removeVideo() {
+  uploadedVideo.value = null
 }
 
 async function handleSubmit() {
   if (!canSubmit.value) return
   loading.value = true
   try {
-    const images = mediaFiles.value.filter((_, i) => mediaPreview.value[i].type === 'image')
-    const videoFile = mediaFiles.value.find((_, i) => mediaPreview.value[i].type === 'video')
-
-    const contentType = videoFile ? 2 : (images.length > 0 ? 1 : 0)
+    const contentType = hasVideo.value ? 2 : (hasImages.value ? 1 : 0)
 
     await createPost({
       contentType,
       title: title.value.trim(),
       description: content.value.trim() || undefined,
       visibility: 1,
-      images: images.length > 0 ? images : undefined,
-      video: videoFile || undefined
+      imageUrls: hasImages.value ? uploadedImages.value.map(img => img.url) : undefined,
+      videoUrl: hasVideo.value ? uploadedVideo.value.url : undefined
     })
     router.push('/')
   } catch (e) {
@@ -99,7 +120,7 @@ async function handleSubmit() {
         class="bg-accent text-white px-5 py-1.5 rounded text-sm font-semibold hover:bg-accent/90 transition-colors disabled:opacity-40"
         @click="handleSubmit"
       >
-        {{ loading ? '发布中...' : '发布' }}
+        {{ loading ? '发布中...' : uploading ? '上传中...' : '发布' }}
       </button>
     </header>
 
@@ -123,18 +144,22 @@ async function handleSubmit() {
         </div>
       </div>
 
-      <!-- Media preview -->
-      <div v-if="mediaPreview.length" class="mt-3 grid gap-2" :class="mediaPreview.length === 1 ? 'grid-cols-1' : 'grid-cols-2'">
+      <!-- 上传中提示 -->
+      <div v-if="uploading" class="mt-3 text-sm text-accent">
+        上传中...
+      </div>
+
+      <!-- 图片预览 -->
+      <div v-if="hasImages" class="mt-3 grid gap-2" :class="uploadedImages.length === 1 ? 'grid-cols-1' : 'grid-cols-2'">
         <div
-          v-for="(item, idx) in mediaPreview"
+          v-for="(item, idx) in uploadedImages"
           :key="idx"
           class="relative rounded-lg overflow-hidden border border-border-custom"
         >
-          <img v-if="item.type === 'image'" :src="item.url" class="w-full h-48 object-cover" />
-          <video v-else :src="item.url" class="w-full h-48 object-cover" controls />
+          <img :src="item.url" class="w-full h-48 object-cover" />
           <button
             class="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-black/80 transition-colors"
-            @click="removeMedia(idx)"
+            @click="removeImage(idx)"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -142,6 +167,24 @@ async function handleSubmit() {
           </button>
           <span class="absolute bottom-2 left-2 text-xs text-white bg-black/50 px-2 py-0.5 rounded">
             {{ item.name }}
+          </span>
+        </div>
+      </div>
+
+      <!-- 视频预览 -->
+      <div v-if="hasVideo" class="mt-3">
+        <div class="relative rounded-lg overflow-hidden border border-border-custom">
+          <video :src="uploadedVideo.url" class="w-full h-48 object-cover" controls />
+          <button
+            class="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-black/80 transition-colors"
+            @click="removeVideo()"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <span class="absolute bottom-2 left-2 text-xs text-white bg-black/50 px-2 py-0.5 rounded">
+            {{ uploadedVideo.name }}
           </span>
         </div>
       </div>

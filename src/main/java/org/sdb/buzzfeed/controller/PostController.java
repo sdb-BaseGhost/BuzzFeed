@@ -14,7 +14,7 @@ public class PostController {
     private final PostService postService;
 
     @PostMapping("/post")
-    public Result post(@Valid CreatePostDTO dto) {
+    public Result post(@Valid @RequestBody CreatePostDTO dto) {
         return Result.success(postService.postContent(dto));
     }
 }
