@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.sdb.buzzfeed.entity.Content;
 import org.sdb.buzzfeed.entity.ContentImage;
 import org.sdb.buzzfeed.entity.ContentVideo;
+import org.sdb.buzzfeed.entity.dto.CreatePostDTO;
+import org.sdb.buzzfeed.entity.vo.CreatePostVO;
 import org.sdb.buzzfeed.mapper.ContentImageMapper;
 import org.sdb.buzzfeed.mapper.ContentVideoMapper;
 import org.sdb.buzzfeed.mapper.PostMapper;
@@ -39,14 +41,12 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional
-    public Object postContent(Integer contentType, String title, String description,
-                               Integer visibility, MultipartFile[] images, MultipartFile video) {
+    public CreatePostVO postContent(CreatePostDTO dto) {
+        Integer contentType = dto.getContentType();
+        MultipartFile[] images = dto.getImages();
+        MultipartFile video = dto.getVideo();
 
-        // 1. 参数校验
-        if (contentType == null || title == null || title.isBlank()) {
-            throw new RuntimeException("contentType 和 title 不能为空");
-        }
-
+        // 1. 业务规则校验（@Valid 已覆盖基础字段校验）
         if (contentType == 1) {
             if (images == null || images.length == 0) {
                 throw new RuntimeException("图文类型至少上传1张图片");
@@ -69,9 +69,9 @@ public class PostServiceImpl implements PostService {
         Content content = new Content();
         content.setItemId(itemId);
         content.setItemType(contentType);
-        content.setTitle(title);
-        content.setSummary(description);
-        content.setVisibility(visibility);
+        content.setTitle(dto.getTitle());
+        content.setSummary(dto.getDescription());
+        content.setVisibility(dto.getVisibility());
         content.setStatus(0);   // 待审核
         content.setCreatorId(UserContext.getUserId());
 
@@ -112,7 +112,7 @@ public class PostServiceImpl implements PostService {
         // 5. 发送 Kafka 审核消息
         kafkaTemplate.send(REVIEW_TOPIC, String.valueOf(itemId));
 
-        return itemId;
+        return new CreatePostVO(itemId);
     }
 }
 

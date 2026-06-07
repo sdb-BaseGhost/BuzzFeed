@@ -1,8 +1,8 @@
 package org.sdb.buzzfeed.service;
 
-import org.springframework.web.multipart.MultipartFile;
+import org.sdb.buzzfeed.entity.dto.CreatePostDTO;
+import org.sdb.buzzfeed.entity.vo.CreatePostVO;
 
 public interface PostService {
-    Object postContent(Integer contentType, String title, String description,
-                       Integer visibility, MultipartFile[] images, MultipartFile video);
+    CreatePostVO postContent(CreatePostDTO dto);
 }
