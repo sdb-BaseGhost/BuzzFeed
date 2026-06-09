@@ -18,11 +18,12 @@ watch(
   { immediate: true }
 )
 
-// 滚动到底部自动加载更多
+// 滚动到底部自动加载更多（监听 main 滚动容器）
 function onScroll() {
-  const scrollHeight = document.documentElement.scrollHeight
-  const scrollTop = document.documentElement.scrollTop || document.body.scrollTop
-  const clientHeight = document.documentElement.clientHeight
+  const container = document.getElementById('main-scroll')
+  if (!container) return
+
+  const { scrollHeight, scrollTop, clientHeight } = container
 
   // 距离底部 200px 时触发预加载
   if (scrollHeight - scrollTop - clientHeight < 200) {
@@ -33,11 +34,17 @@ function onScroll() {
 }
 
 onMounted(() => {
-  window.addEventListener('scroll', onScroll, { passive: true })
+  const container = document.getElementById('main-scroll')
+  if (container) {
+    container.addEventListener('scroll', onScroll, { passive: true })
+  }
 })
 
 onUnmounted(() => {
-  window.removeEventListener('scroll', onScroll)
+  const container = document.getElementById('main-scroll')
+  if (container) {
+    container.removeEventListener('scroll', onScroll)
+  }
 })
 </script>
 
