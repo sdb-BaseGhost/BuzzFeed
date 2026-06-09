@@ -1,49 +1,73 @@
 <script setup>
-import { onMounted, onUnmounted, watch } from 'vue'
-import { useFeed } from '@/composables/useFeed'
+import { ref, watch, onMounted, onUnmounted, nextTick, computed } from 'vue'
+import { useFeedStore } from '@/stores/feed'
 import { useAuthStore } from '@/stores/auth'
 import FeedItem from './FeedItem.vue'
 
-const { posts, loading, hasMore, fetchFeed, loadMore } = useFeed()
+const feedStore = useFeedStore()
 const authStore = useAuthStore()
+
+const posts = computed(() => feedStore.posts)
+const loading = computed(() => feedStore.loading)
+const hasMore = computed(() => feedStore.hasMore)
+
+/** 底部哨兵元素 */
+const sentinelRef = ref(null)
+let observer = null
 
 // currentUser 加载完成后自动拉取 Feed（解决页面刷新时序问题）
 watch(
   () => authStore.currentUser,
   (user) => {
     if (user) {
-      fetchFeed()
+      feedStore.fetchFeed()
     }
   },
   { immediate: true }
 )
 
-// 滚动到底部自动加载更多（监听 main 滚动容器）
-function onScroll() {
-  const container = document.getElementById('main-scroll')
-  if (!container) return
-
-  const { scrollHeight, scrollTop, clientHeight } = container
-
-  // 距离底部 200px 时触发预加载
-  if (scrollHeight - scrollTop - clientHeight < 200) {
-    if (!loading.value && hasMore.value) {
-      loadMore()
+/**
+ * 逐级向上查找最近的 overflow-y-auto 滚动祖先
+ */
+function findScrollRoot(el) {
+  let node = el?.parentElement
+  while (node) {
+    const style = window.getComputedStyle(node)
+    if (style.overflowY === 'auto' || style.overflowY === 'scroll') {
+      return node
     }
+    node = node.parentElement
   }
+  return null
+}
+
+/**
+ * IntersectionObserver：当底部哨兵元素进入滚动容器可视区域时自动加载更多
+ */
+async function setupObserver() {
+  await nextTick()
+  if (!sentinelRef.value) return
+
+  const scrollRoot = findScrollRoot(sentinelRef.value)
+
+  observer = new IntersectionObserver(
+    (entries) => {
+      if (entries[0].isIntersecting && hasMore.value && !loading.value) {
+        feedStore.loadMore()
+      }
+    },
+    { root: scrollRoot, rootMargin: '200px' }
+  )
+  observer.observe(sentinelRef.value)
 }
 
 onMounted(() => {
-  const container = document.getElementById('main-scroll')
-  if (container) {
-    container.addEventListener('scroll', onScroll, { passive: true })
-  }
+  setupObserver()
 })
 
 onUnmounted(() => {
-  const container = document.getElementById('main-scroll')
-  if (container) {
-    container.removeEventListener('scroll', onScroll)
+  if (observer) {
+    observer.disconnect()
   }
 })
 </script>
@@ -62,6 +86,9 @@ onUnmounted(() => {
     </div>
 
     <FeedItem v-for="post in posts" :key="post.itemId" :post="post" />
+
+    <!-- 底部哨兵：IntersectionObserver 监控此元素，进入视口即触发 loadMore -->
+    <div ref="sentinelRef" class="h-1" />
 
     <div v-if="!hasMore && posts.length > 0" class="p-4 text-center text-text-secondary">
       没有更多了

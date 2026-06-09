@@ -1,40 +1,83 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { getFeed } from '@/api/feed'
-import { toggleLike as apiToggleLike } from '@/api/post'
+import { useAuthStore } from '@/stores/auth'
+
+const INITIAL_SIZE = 15  // 首次加载量，足够填满大屏
+const PAGE_SIZE = 5       // 后续每次滚动加载量
 
 export const useFeedStore = defineStore('feed', () => {
   const posts = ref([])
-  const followingPosts = ref([])
-  const cursor = ref(null)
+  const lastTime = ref(null)       // 双游标：最后一条的 publishTime
+  const lastContentId = ref(null)  // 双游标：最后一条的 itemId
   const loading = ref(false)
   const hasMore = ref(true)
 
-  async function fetchFeed(type = 'recommend') {
+  /**
+   * 获取当前用户ID
+   */
+  function getUserId() {
+    const authStore = useAuthStore()
+    return authStore.currentUser?.userId
+  }
+
+  /**
+   * 更新游标为列表最后一条数据
+   */
+  function updateCursor() {
+    if (posts.value.length > 0) {
+      const last = posts.value[posts.value.length - 1]
+      lastTime.value = last.publishTime
+      lastContentId.value = last.itemId
+    }
+  }
+
+  /**
+   * 首次加载 / 下拉刷新
+   */
+  async function fetchFeed() {
+    const userId = getUserId()
+    if (!userId) return
+
     loading.value = true
     try {
-      const res = await getFeed({ type, cursor: null })
-      if (type === 'recommend') {
-        posts.value = res.data.posts
-      } else {
-        followingPosts.value = res.data.posts
-      }
-      cursor.value = res.data.cursor
-      hasMore.value = res.data.hasMore
+      const res = await getFeed({
+        userId,
+        type: 0,
+        lastTime: null,
+        contentId: null,
+        num: INITIAL_SIZE
+      })
+      posts.value = res.data || []
+      hasMore.value = posts.value.length >= INITIAL_SIZE
+      updateCursor()
     } finally {
       loading.value = false
     }
   }
 
-  async function loadMore(type = 'recommend') {
+  /**
+   * 上滑加载更多
+   */
+  async function loadMore() {
     if (loading.value || !hasMore.value) return
+
+    const userId = getUserId()
+    if (!userId) return
+
     loading.value = true
     try {
-      const res = await getFeed({ type, cursor: cursor.value })
-      const target = type === 'recommend' ? posts : followingPosts
-      target.value.push(...res.data.posts)
-      cursor.value = res.data.cursor
-      hasMore.value = res.data.hasMore
+      const res = await getFeed({
+        userId,
+        type: 1,
+        lastTime: lastTime.value,
+        contentId: lastContentId.value,
+        num: PAGE_SIZE
+      })
+      const newPosts = res.data || []
+      posts.value.push(...newPosts)
+      hasMore.value = newPosts.length >= PAGE_SIZE
+      updateCursor()
     } finally {
       loading.value = false
     }
@@ -44,14 +87,5 @@ export const useFeedStore = defineStore('feed', () => {
     posts.value.unshift(post)
   }
 
-  async function toggleLike(postId) {
-    const res = await apiToggleLike(postId)
-    const post = posts.value.find(p => p.postId === postId) || followingPosts.value.find(p => p.postId === postId)
-    if (post) {
-      post.isLiked = res.data.isLiked
-      post.likeCount += res.data.isLiked ? 1 : -1
-    }
-  }
-
-  return { posts, followingPosts, cursor, loading, hasMore, fetchFeed, loadMore, addPost, toggleLike }
+  return { posts, loading, hasMore, fetchFeed, loadMore, addPost }
 })
