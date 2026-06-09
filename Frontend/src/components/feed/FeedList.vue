@@ -1,37 +1,49 @@
 <script setup>
-import { onMounted, computed, ref } from 'vue'
+import { onMounted, onUnmounted, watch } from 'vue'
 import { useFeed } from '@/composables/useFeed'
+import { useAuthStore } from '@/stores/auth'
 import FeedItem from './FeedItem.vue'
 
-const props = defineProps({
-  type: { type: String, default: 'recommend' }
-})
+const { posts, loading, hasMore, fetchFeed, loadMore } = useFeed()
+const authStore = useAuthStore()
 
-const { posts, followingPosts, loading, hasMore, loadFeed, loadMore } = useFeed()
-const sentinel = ref(null)
-
-const currentPosts = computed(() => props.type === 'recommend' ? posts : followingPosts)
-
-onMounted(() => {
-  loadFeed(props.type)
-})
-
-onMounted(() => {
-  const observer = new IntersectionObserver(entries => {
-    if (entries[0].isIntersecting && hasMore.value && !loading.value) {
-      loadMore(props.type)
+// currentUser 加载完成后自动拉取 Feed（解决页面刷新时序问题）
+watch(
+  () => authStore.currentUser,
+  (user) => {
+    if (user) {
+      fetchFeed()
     }
-  }, { threshold: 0.1 })
+  },
+  { immediate: true }
+)
 
-  if (sentinel.value) {
-    observer.observe(sentinel.value)
+// 滚动到底部自动加载更多
+function onScroll() {
+  const scrollHeight = document.documentElement.scrollHeight
+  const scrollTop = document.documentElement.scrollTop || document.body.scrollTop
+  const clientHeight = document.documentElement.clientHeight
+
+  // 距离底部 200px 时触发预加载
+  if (scrollHeight - scrollTop - clientHeight < 200) {
+    if (!loading.value && hasMore.value) {
+      loadMore()
+    }
   }
+}
+
+onMounted(() => {
+  window.addEventListener('scroll', onScroll, { passive: true })
+})
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', onScroll)
 })
 </script>
 
 <template>
   <div>
-    <div v-if="loading && currentPosts.length === 0" class="p-4 space-y-4">
+    <div v-if="loading && posts.length === 0" class="p-4 space-y-4">
       <div v-for="i in 3" :key="i" class="animate-pulse flex gap-3">
         <div class="w-10 h-10 rounded-full bg-bg-secondary"></div>
         <div class="flex-1 space-y-2">
@@ -42,15 +54,13 @@ onMounted(() => {
       </div>
     </div>
 
-    <FeedItem v-for="post in currentPosts" :key="post.postId" :post="post" />
+    <FeedItem v-for="post in posts" :key="post.itemId" :post="post" />
 
-    <div ref="sentinel" class="h-10"></div>
-
-    <div v-if="!hasMore && currentPosts.length > 0" class="p-4 text-center text-text-secondary">
+    <div v-if="!hasMore && posts.length > 0" class="p-4 text-center text-text-secondary">
       没有更多了
     </div>
 
-    <div v-if="loading && currentPosts.length > 0" class="p-4 text-center text-text-secondary">
+    <div v-if="loading && posts.length > 0" class="p-4 text-center text-text-secondary">
       加载中...
     </div>
   </div>
