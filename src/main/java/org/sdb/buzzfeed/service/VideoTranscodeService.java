@@ -68,6 +68,45 @@ public class VideoTranscodeService {
     }
 
     /**
+     * 从视频中截取封面帧（JPEG）
+     *
+     * @param video    视频文件
+     * @param seekTime 截取时间点（秒），一般取 1.0
+     * @return 封面 JPEG 临时文件；失败返回 null
+     */
+    public File extractCoverFrame(File video, double seekTime) {
+        try {
+            File cover = Files.createTempFile("cover_", ".jpg").toFile();
+
+            ProcessBuilder pb = new ProcessBuilder(
+                    ffmpegPath,
+                    "-y",
+                    "-ss", String.valueOf(seekTime),
+                    "-i", video.getAbsolutePath(),
+                    "-frames:v", "1",
+                    "-q:v", "2",                // JPEG 质量（2=高质量）
+                    "-f", "image2",
+                    cover.getAbsolutePath()
+            );
+            pb.redirectErrorStream(true);
+            Process process = pb.start();
+            byte[] logBytes = process.getInputStream().readAllBytes();
+            int exit = process.waitFor();
+
+            if (exit == 0 && cover.exists() && cover.length() > 0) {
+                log.info("封面截取成功: {} ({}KB)", cover.getName(), cover.length() / 1024);
+                return cover;
+            } else {
+                log.error("封面截取失败 exit={}, output: {}", exit, new String(logBytes));
+                cover.delete();
+            }
+        } catch (Exception e) {
+            log.error("封面截取异常: {}", e.getMessage(), e);
+        }
+        return null;
+    }
+
+    /**
      * 将视频转码为 H.264 + AAC 封装的 MP4
      *
      * @param input  原始视频文件

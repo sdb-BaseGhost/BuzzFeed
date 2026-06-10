@@ -5,8 +5,8 @@
 
     <insert id="insert" parameterType="org.sdb.buzzfeed.entity.ContentVideo"
             useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO video_info (item_id, sort_order, version, creator_id, bucket_name, object_name, video_url, duration, file_size, status)
-        VALUES (#{itemId}, 0, 1, #{creatorId}, #{bucketName}, #{objectName}, #{videoUrl}, #{duration}, #{fileSize}, 0)
+        INSERT INTO video_info (item_id, sort_order, version, creator_id, bucket_name, object_name, video_url, cover_url, duration, file_size, status)
+        VALUES (#{itemId}, 0, 1, #{creatorId}, #{bucketName}, #{objectName}, #{videoUrl}, #{coverUrl}, #{duration}, #{fileSize}, 0)
     </insert>
 
     <select id="selectByItemIds" resultType="org.sdb.buzzfeed.entity.ContentVideo">

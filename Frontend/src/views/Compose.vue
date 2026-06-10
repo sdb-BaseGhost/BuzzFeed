@@ -71,16 +71,9 @@ async function handleVideoSelect(e) {
     const res = await uploadVideo(file)
     uploadedVideo.value = { url: res.data.url, objectName: res.data.objectName, name: file.name }
 
-    // 自动截取视频第一帧作为封面图
-    try {
-      const blob = await captureVideoFrame(file)
-      if (blob) {
-        const coverFile = new File([blob], 'cover.jpg', { type: 'image/jpeg' })
-        const coverRes = await uploadImage(coverFile)
-        coverUrl.value = coverRes.data.url
-      }
-    } catch (coverErr) {
-      console.warn('封面截取失败，继续发布:', coverErr)
+    // 封面由后端转码时自动生成
+    if (res.data.coverUrl) {
+      coverUrl.value = res.data.coverUrl
     }
   } catch (err) {
     alert('视频上传失败: ' + (err.message || '未知错误'))
@@ -88,60 +81,6 @@ async function handleVideoSelect(e) {
     uploading.value = false
     e.target.value = ''
   }
-}
-
-/**
- * 从视频文件中截取某一帧，返回 Blob
- * @param {File} file 视频文件
- * @param {number} seekTime 截取的时间点（秒），默认1秒
- */
-function captureVideoFrame(file, seekTime = 1) {
-  return new Promise((resolve, reject) => {
-    const video = document.createElement('video')
-    video.preload = 'auto'
-    video.muted = true
-    video.playsInline = true
-    video.crossOrigin = 'anonymous'
-
-    const url = URL.createObjectURL(file)
-
-    video.onloadedmetadata = () => {
-      // 确保 seekTime 不超过视频时长
-      const target = Math.min(seekTime, video.duration * 0.5)
-      video.currentTime = target > 0 ? target : 0.1
-    }
-
-    video.onseeked = () => {
-      // 等一帧再画，确保解码完成
-      requestAnimationFrame(() => {
-        try {
-          const canvas = document.createElement('canvas')
-          canvas.width = video.videoWidth
-          canvas.height = video.videoHeight
-          const ctx = canvas.getContext('2d')
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-          canvas.toBlob((blob) => {
-            URL.revokeObjectURL(url)
-            if (blob && blob.size > 0) {
-              resolve(blob)
-            } else {
-              reject(new Error('截帧结果为空'))
-            }
-          }, 'image/jpeg', 0.85)
-        } catch (err) {
-          URL.revokeObjectURL(url)
-          reject(err)
-        }
-      })
-    }
-
-    video.onerror = () => {
-      URL.revokeObjectURL(url)
-      reject(new Error('视频加载失败'))
-    }
-
-    video.src = url
-  })
 }
 
 function removeImage(index) {

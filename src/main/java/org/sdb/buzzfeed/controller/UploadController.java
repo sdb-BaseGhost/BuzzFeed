@@ -35,9 +35,12 @@ public class UploadController {
             return Result.error("文件不能为空");
         }
         try {
-            String objectName = minioService.upload(file, directory);
-            String url = minioEndpoint + "/" + bucketName + "/" + objectName;
-            return Result.success(new UploadVO(url, objectName));
+            MinioService.UploadResult uploadResult = minioService.upload(file, directory);
+            String url = minioEndpoint + "/" + bucketName + "/" + uploadResult.getObjectName();
+            String coverUrl = uploadResult.getCoverUrl() != null
+                    ? minioEndpoint + "/" + bucketName + "/" + uploadResult.getCoverUrl()
+                    : null;
+            return Result.success(new UploadVO(url, uploadResult.getObjectName(), coverUrl));
         } catch (Exception e) {
             return Result.error("文件上传失败: " + e.getMessage());
         }
