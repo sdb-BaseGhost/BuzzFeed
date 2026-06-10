@@ -20,6 +20,15 @@ const comments = ref([])  // 本地暂存的评论列表
 
 // ========== 视频播放状态 ==========
 const isVideoPlaying = ref(false)
+const coverRatio = ref(null) // 封面宽高比 (width/height)，@load 后计算
+
+function onCoverLoad(e) {
+  const { naturalWidth: w, naturalHeight: h } = e.target
+  if (w && h) coverRatio.value = w / h
+}
+
+// 是否为竖屏封面（宽高比 < 3:4）
+const isVerticalCover = computed(() => coverRatio.value !== null && coverRatio.value < 0.75)
 
 // ========== 图片 Lightbox ==========
 const showLightbox = ref(false)
@@ -213,7 +222,11 @@ function playVideo(event) {
             <img
               v-if="post.videoCoverUrl"
               :src="post.videoCoverUrl"
-              class="w-full max-h-[360px] object-cover group-hover:opacity-90 transition-opacity"
+              :style="isVerticalCover ? { maxHeight: '480px', objectFit: 'contain' } : {}"
+              :class="isVerticalCover
+                ? 'w-full group-hover:opacity-90 transition-opacity'
+                : 'w-full max-h-[360px] object-cover group-hover:opacity-90 transition-opacity'"
+              @load="onCoverLoad"
             />
             <div v-else class="w-full h-[240px] bg-black/80 flex items-center justify-center">
               <svg xmlns="http://www.w3.org/2000/svg" fill="white" viewBox="0 0 24 24" class="w-16 h-16 opacity-50">
