@@ -3,10 +3,11 @@ package org.sdb.buzzfeed.entity.vo;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Feed 流每条内容的返回 VO
- * 包含内容基础信息 + 发布者用户信息
+ * 包含内容基础信息 + 发布者用户信息 + 媒体资源
  */
 @Data
 public class FeedItemVO {
@@ -39,4 +40,18 @@ public class FeedItemVO {
 
     /** 头像 */
     private String avatar;
+
+    // ========== 媒体资源 ==========
+
+    /** 图片URL列表（图文类型，最多3张） */
+    private List<String> imageUrls;
+
+    /** 视频URL（视频类型） */
+    private String videoUrl;
+
+    /** 视频封面URL */
+    private String videoCoverUrl;
+
+    /** 视频时长（秒） */
+    private Integer videoDuration;
 }

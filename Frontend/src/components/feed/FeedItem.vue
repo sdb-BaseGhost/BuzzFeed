@@ -18,6 +18,13 @@ const showCommentBox = ref(false)
 const commentText = ref('')
 const comments = ref([])  // 本地暂存的评论列表
 
+// ========== 视频播放状态 ==========
+const isVideoPlaying = ref(false)
+
+// ========== 图片 Lightbox ==========
+const showLightbox = ref(false)
+const lightboxIndex = ref(0)
+
 const timeAgo = computed(() => {
   const diff = Date.now() - new Date(props.post.publishTime).getTime()
   const minutes = Math.floor(diff / 60000)
@@ -28,6 +35,10 @@ const timeAgo = computed(() => {
   const days = Math.floor(hours / 24)
   return `${days}天前`
 })
+
+const imageUrls = computed(() => props.post.imageUrls || [])
+const hasImages = computed(() => imageUrls.value.length > 0)
+const hasVideo = computed(() => !!props.post.videoUrl)
 
 function goToPost() {
   router.push(`/post/${props.post.itemId}`)
@@ -76,6 +87,47 @@ function submitComment() {
   commentText.value = ''
   emit('comment', { itemId: props.post.itemId, text })
 }
+
+/**
+ * 格式化视频时长
+ */
+function formatDuration(seconds) {
+  if (!seconds) return ''
+  const m = Math.floor(seconds / 60)
+  const s = seconds % 60
+  return `${m}:${String(s).padStart(2, '0')}`
+}
+
+/**
+ * 打开图片预览
+ */
+function openLightbox(index, event) {
+  event.stopPropagation()
+  lightboxIndex.value = index
+  showLightbox.value = true
+}
+
+function closeLightbox() {
+  showLightbox.value = false
+}
+
+function prevImage(event) {
+  event.stopPropagation()
+  lightboxIndex.value = (lightboxIndex.value - 1 + imageUrls.value.length) % imageUrls.value.length
+}
+
+function nextImage(event) {
+  event.stopPropagation()
+  lightboxIndex.value = (lightboxIndex.value + 1) % imageUrls.value.length
+}
+
+/**
+ * 开始播放视频
+ */
+function playVideo(event) {
+  event.stopPropagation()
+  isVideoPlaying.value = true
+}
 </script>
 
 <template>
@@ -107,6 +159,92 @@ function submitComment() {
 
         <!-- 正文 -->
         <p v-if="post.summary" class="mt-1 text-text-primary whitespace-pre-wrap break-words">{{ post.summary }}</p>
+
+        <!-- 图片网格 -->
+        <div v-if="hasImages" class="mt-3">
+          <!-- 1张：单张大图 -->
+          <div v-if="imageUrls.length === 1" class="rounded-xl overflow-hidden">
+            <img
+              :src="imageUrls[0]"
+              class="w-full max-h-[360px] object-cover cursor-pointer hover:opacity-90 transition-opacity"
+              @click="openLightbox(0, $event)"
+            />
+          </div>
+          <!-- 2张：左右并排 -->
+          <div v-else-if="imageUrls.length === 2" class="grid grid-cols-2 gap-0.5 rounded-xl overflow-hidden">
+            <img
+              v-for="(url, idx) in imageUrls"
+              :key="idx"
+              :src="url"
+              class="w-full h-[200px] object-cover cursor-pointer hover:opacity-90 transition-opacity"
+              @click="openLightbox(idx, $event)"
+            />
+          </div>
+          <!-- 3张：左大右二 -->
+          <div v-else class="grid grid-cols-2 gap-0.5 rounded-xl overflow-hidden">
+            <img
+              :src="imageUrls[0]"
+              class="w-full h-[280px] object-cover cursor-pointer hover:opacity-90 transition-opacity row-span-2"
+              @click="openLightbox(0, $event)"
+            />
+            <div class="flex flex-col gap-0.5">
+              <img
+                :src="imageUrls[1]"
+                class="w-full h-[139px] object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                @click="openLightbox(1, $event)"
+              />
+              <img
+                :src="imageUrls[2]"
+                class="w-full h-[139px] object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                @click="openLightbox(2, $event)"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- 视频展示 -->
+        <div v-if="hasVideo" class="mt-3">
+          <!-- 未播放：显示封面 + 播放按钮 -->
+          <div
+            v-if="!isVideoPlaying"
+            class="relative rounded-xl overflow-hidden cursor-pointer group"
+            @click="playVideo($event)"
+          >
+            <img
+              v-if="post.videoCoverUrl"
+              :src="post.videoCoverUrl"
+              class="w-full max-h-[360px] object-cover group-hover:opacity-90 transition-opacity"
+            />
+            <div v-else class="w-full h-[240px] bg-black/80 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="white" viewBox="0 0 24 24" class="w-16 h-16 opacity-50">
+                <path d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 010 1.972l-11.54 6.347a1.125 1.125 0 01-1.667-.986V5.653z" />
+              </svg>
+            </div>
+            <!-- 中央播放按钮 -->
+            <div class="absolute inset-0 flex items-center justify-center">
+              <div class="w-14 h-14 bg-black/60 rounded-full flex items-center justify-center group-hover:bg-black/80 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="white" viewBox="0 0 24 24" class="w-7 h-7 ml-1">
+                  <path d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 010 1.972l-11.54 6.347a1.125 1.125 0 01-1.667-.986V5.653z" />
+                </svg>
+              </div>
+            </div>
+            <!-- 时长标签 -->
+            <span
+              v-if="post.videoDuration"
+              class="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-0.5 rounded"
+            >
+              {{ formatDuration(post.videoDuration) }}
+            </span>
+          </div>
+          <!-- 播放中：内嵌 video 标签 -->
+          <video
+            v-else
+            :src="post.videoUrl"
+            controls
+            autoplay
+            class="w-full max-h-[480px] rounded-xl"
+          />
+        </div>
 
         <!-- 操作栏 -->
         <div class="flex items-center gap-10 mt-3">
@@ -186,6 +324,63 @@ function submitComment() {
         </transition>
       </div>
     </div>
+
+    <!-- 图片预览 Lightbox -->
+    <teleport to="body">
+      <div
+        v-if="showLightbox"
+        class="fixed inset-0 z-[9999] bg-black/90 flex items-center justify-center"
+        @click.self="closeLightbox"
+        @keyup.escape="closeLightbox"
+      >
+        <!-- 关闭按钮 -->
+        <button
+          class="absolute top-4 right-4 z-10 text-white/80 hover:text-white transition-colors"
+          @click="closeLightbox"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-8 h-8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
+        <!-- 左箭头 -->
+        <button
+          v-if="imageUrls.length > 1"
+          class="absolute left-4 z-10 w-10 h-10 bg-black/40 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors"
+          @click="prevImage($event)"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+          </svg>
+        </button>
+
+        <!-- 图片 -->
+        <img
+          :src="imageUrls[lightboxIndex]"
+          class="max-h-[85vh] max-w-[90vw] object-contain select-none"
+          @click.stop
+        />
+
+        <!-- 右箭头 -->
+        <button
+          v-if="imageUrls.length > 1"
+          class="absolute right-4 z-10 w-10 h-10 bg-black/40 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors"
+          @click="nextImage($event)"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+          </svg>
+        </button>
+
+        <!-- 图片计数器 -->
+        <div
+          v-if="imageUrls.length > 1"
+          class="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/80 text-sm bg-black/50 px-3 py-1 rounded-full"
+        >
+          {{ lightboxIndex + 1 }} / {{ imageUrls.length }}
+        </div>
+      </div>
+    </teleport>
   </article>
 </template>
 

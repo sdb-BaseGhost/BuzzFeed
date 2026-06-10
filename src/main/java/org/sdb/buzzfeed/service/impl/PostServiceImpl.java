@@ -98,6 +98,13 @@ public class PostServiceImpl implements PostService {
             cv.setBucketName(bucketName);
             cv.setObjectName(objectName);
             cv.setVideoUrl(videoUrl);
+            // 封面图：如果前端传了 coverUrl 就用，否则为空
+            if (dto.getCoverUrl() != null && !dto.getCoverUrl().isBlank()) {
+                String coverObjectName = dto.getCoverUrl().startsWith(prefix)
+                        ? dto.getCoverUrl().substring(prefix.length())
+                        : dto.getCoverUrl();
+                cv.setCoverUrl(coverObjectName);
+            }
             cv.setDuration(0);
             cv.setFileSize(0L);
             contentVideoMapper.insert(cv);

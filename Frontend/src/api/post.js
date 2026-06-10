@@ -12,14 +12,15 @@ import { delay, mockResult, generateId } from '@/mock'
  * @param {string[]} [params.imageUrls]   图文类型：已上传的图片 URL 列表
  * @param {string}   [params.videoUrl]    视频类型：已上传的视频 URL
  */
-export async function createPost({ contentType, title, description, visibility, imageUrls, videoUrl }) {
+export async function createPost({ contentType, title, description, visibility, imageUrls, videoUrl, coverUrl }) {
   return api.post('/post', {
     contentType,
     title,
     description,
     visibility,
     imageUrls,
-    videoUrl
+    videoUrl,
+    coverUrl
   })
 }
 

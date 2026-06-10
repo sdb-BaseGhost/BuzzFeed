@@ -41,4 +41,7 @@ public class CreatePostDTO {
 
     /** 视频类型：已上传的视频 URL */
     private String videoUrl;
+
+    /** 视频类型：封面图 URL（可选，前端截帧上传） */
+    private String coverUrl;
 }

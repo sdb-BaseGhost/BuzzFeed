@@ -3,9 +3,13 @@ package org.sdb.buzzfeed.service.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.sdb.buzzfeed.entity.Content;
+import org.sdb.buzzfeed.entity.ContentImage;
+import org.sdb.buzzfeed.entity.ContentVideo;
 import org.sdb.buzzfeed.entity.Feed;
 import org.sdb.buzzfeed.entity.User;
 import org.sdb.buzzfeed.entity.vo.FeedItemVO;
+import org.sdb.buzzfeed.mapper.ContentImageMapper;
+import org.sdb.buzzfeed.mapper.ContentVideoMapper;
 import org.sdb.buzzfeed.mapper.OutboxMapper;
 import org.sdb.buzzfeed.mapper.InboxMapper;
 import org.sdb.buzzfeed.mapper.UserMapper;
@@ -25,7 +29,15 @@ public class FeedServiceImpl implements FeedService {
     private final UserMapper userMapper;
     private final OutboxMapper outboxMapper;
     private final InboxMapper inboxMapper;
+    private final ContentImageMapper contentImageMapper;
+    private final ContentVideoMapper contentVideoMapper;
     private final RedisTemplate<String, String> redisTemplate;
+
+    @Value("${minio.endpoint}")
+    private String minioEndpoint;
+
+    @Value("${minio.bucket-name}")
+    private String bucketName;
 
     @Value("${feed.big-v-threshold:2}")
     private int bigVThreshold;
@@ -115,21 +127,32 @@ public class FeedServiceImpl implements FeedService {
     }
 
     /**
-     * 将 Content 列表转换为 FeedItemVO 列表（批量查用户信息，避免 N+1）
+     * 将 Content 列表转换为 FeedItemVO 列表（批量查用户信息 + 媒体资源，避免 N+1）
      */
     private List<FeedItemVO> convertToVO(List<Content> contentList) {
         if (contentList == null || contentList.isEmpty()) {
             return Collections.emptyList();
         }
 
-        // 收集所有 creatorId 并去重，批量查用户信息
+        // 1. 收集所有 creatorId 并去重，批量查用户信息
         Set<Long> creatorIds = new LinkedHashSet<>();
+        List<Long> imageItemIds = new ArrayList<>();
+        List<Long> videoItemIds = new ArrayList<>();
+
         for (Content c : contentList) {
             if (c.getCreatorId() != null) {
                 creatorIds.add(c.getCreatorId());
             }
+            if (c.getItemType() != null) {
+                if (c.getItemType() == 1) {
+                    imageItemIds.add(c.getItemId());
+                } else if (c.getItemType() == 2) {
+                    videoItemIds.add(c.getItemId());
+                }
+            }
         }
 
+        // 2. 批量查用户
         Map<Long, User> userMap = new HashMap<>();
         for (Long creatorId : creatorIds) {
             User user = userMapper.selectById(creatorId);
@@ -138,7 +161,30 @@ public class FeedServiceImpl implements FeedService {
             }
         }
 
-        // 组装 VO
+        // 3. 批量查图片，按 itemId 分组（拼接完整 URL）
+        String urlPrefix = minioEndpoint + "/" + bucketName + "/";
+        Map<Long, List<String>> imageMap = new HashMap<>();
+        if (!imageItemIds.isEmpty()) {
+            List<ContentImage> images = contentImageMapper.selectByItemIds(imageItemIds);
+            for (ContentImage img : images) {
+                String imageUrl = img.getImageUri().startsWith("http")
+                        ? img.getImageUri()
+                        : urlPrefix + img.getImageUri();
+                imageMap.computeIfAbsent(img.getItemId(), k -> new ArrayList<>())
+                        .add(imageUrl);
+            }
+        }
+
+        // 4. 批量查视频，按 itemId 映射
+        Map<Long, ContentVideo> videoMap = new HashMap<>();
+        if (!videoItemIds.isEmpty()) {
+            List<ContentVideo> videos = contentVideoMapper.selectByItemIds(videoItemIds);
+            for (ContentVideo v : videos) {
+                videoMap.putIfAbsent(v.getItemId(), v);
+            }
+        }
+
+        // 5. 组装 VO
         List<FeedItemVO> voList = new ArrayList<>(contentList.size());
         for (Content c : contentList) {
             FeedItemVO vo = new FeedItemVO();
@@ -149,11 +195,31 @@ public class FeedServiceImpl implements FeedService {
             vo.setSummary(c.getSummary());
             vo.setPublishTime(c.getPublishTime());
 
+            // 用户信息
             User user = userMap.get(c.getCreatorId());
             if (user != null) {
                 vo.setUsername(user.getUsername());
                 vo.setDisplayName(user.getDisplayName());
                 vo.setAvatar(user.getAvatar());
+            }
+
+            // 媒体资源
+            List<String> urls = imageMap.get(c.getItemId());
+            if (urls != null && !urls.isEmpty()) {
+                vo.setImageUrls(urls);
+            }
+
+            ContentVideo video = videoMap.get(c.getItemId());
+            if (video != null) {
+                vo.setVideoUrl(video.getVideoUrl());
+                // 封面 URL：存的是相对路径，需要拼接前缀
+                if (video.getCoverUrl() != null && !video.getCoverUrl().isBlank()) {
+                    String coverUrl = video.getCoverUrl().startsWith("http")
+                            ? video.getCoverUrl()
+                            : urlPrefix + video.getCoverUrl();
+                    vo.setVideoCoverUrl(coverUrl);
+                }
+                vo.setVideoDuration(video.getDuration());
             }
 
             voList.add(vo);

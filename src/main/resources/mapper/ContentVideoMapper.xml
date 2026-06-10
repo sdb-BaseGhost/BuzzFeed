@@ -9,4 +9,13 @@
         VALUES (#{itemId}, 0, 1, #{creatorId}, #{bucketName}, #{objectName}, #{videoUrl}, #{duration}, #{fileSize}, 0)
     </insert>
 
+    <select id="selectByItemIds" resultType="org.sdb.buzzfeed.entity.ContentVideo">
+        SELECT id, item_id, video_url, cover_url, duration
+        FROM video_info
+        WHERE item_id IN
+        <foreach collection="itemIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
 </mapper>
