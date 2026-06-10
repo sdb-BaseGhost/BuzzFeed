@@ -50,6 +50,9 @@ minio:
   secret-key: minioadmin
   bucket-name: buzzfeed
 
+ffmpeg:
+  path: C:/Users/蔡万振·/AppData/Local/Microsoft/WinGet/Packages/Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe/ffmpeg-8.1.1-full_build/bin/ffmpeg.exe
+
 feed:
   active-days: 7
   big-v-threshold: 2
