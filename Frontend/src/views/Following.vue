@@ -9,6 +9,6 @@ import FeedList from '@/components/feed/FeedList.vue'
         <h1 class="text-xl font-bold">关注</h1>
       </div>
     </header>
-    <FeedList type="following" />
+    <FeedList />
   </div>
 </template>

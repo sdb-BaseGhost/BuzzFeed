@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.sdb.buzzfeed.entity.Content;
 import org.sdb.buzzfeed.entity.Feed;
+import org.sdb.buzzfeed.entity.User;
+import org.sdb.buzzfeed.entity.vo.FeedItemVO;
 import org.sdb.buzzfeed.mapper.OutboxMapper;
 import org.sdb.buzzfeed.mapper.InboxMapper;
 import org.sdb.buzzfeed.mapper.UserMapper;
@@ -34,7 +36,7 @@ public class FeedServiceImpl implements FeedService {
     private static final long MAX_CONTENT_ID = Long.MAX_VALUE;
 
     @Override
-    public List<Content> getFeed(Feed feed) {
+    public List<FeedItemVO> getFeed(Feed feed) {
         Long userId = feed.getUserId();
         Integer type = feed.getType();
         LocalDateTime lastTime = feed.getLastTime();
@@ -85,7 +87,7 @@ public class FeedServiceImpl implements FeedService {
 
         // 5. 活跃用户或没有大V -> 直接返回收件箱结果
         if (isActive || !hasInfluencers) {
-            return inboxList != null ? inboxList : Collections.emptyList();
+            return convertToVO(inboxList != null ? inboxList : Collections.emptyList());
         }
 
         // 6. 非活跃用户 + 有大V -> 拉大V发件箱 + 多路归并
@@ -109,7 +111,54 @@ public class FeedServiceImpl implements FeedService {
         if (inboxList == null) {
             inboxList = Collections.emptyList();
         }
-        return mergeFeeds(inboxList, outboxMap, num);
+        return convertToVO(mergeFeeds(inboxList, outboxMap, num));
+    }
+
+    /**
+     * 将 Content 列表转换为 FeedItemVO 列表（批量查用户信息，避免 N+1）
+     */
+    private List<FeedItemVO> convertToVO(List<Content> contentList) {
+        if (contentList == null || contentList.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // 收集所有 creatorId 并去重，批量查用户信息
+        Set<Long> creatorIds = new LinkedHashSet<>();
+        for (Content c : contentList) {
+            if (c.getCreatorId() != null) {
+                creatorIds.add(c.getCreatorId());
+            }
+        }
+
+        Map<Long, User> userMap = new HashMap<>();
+        for (Long creatorId : creatorIds) {
+            User user = userMapper.selectById(creatorId);
+            if (user != null) {
+                userMap.put(creatorId, user);
+            }
+        }
+
+        // 组装 VO
+        List<FeedItemVO> voList = new ArrayList<>(contentList.size());
+        for (Content c : contentList) {
+            FeedItemVO vo = new FeedItemVO();
+            vo.setItemId(c.getItemId());
+            vo.setCreatorId(c.getCreatorId());
+            vo.setItemType(c.getItemType());
+            vo.setTitle(c.getTitle());
+            vo.setSummary(c.getSummary());
+            vo.setPublishTime(c.getPublishTime());
+
+            User user = userMap.get(c.getCreatorId());
+            if (user != null) {
+                vo.setUsername(user.getUsername());
+                vo.setDisplayName(user.getDisplayName());
+                vo.setAvatar(user.getAvatar());
+            }
+
+            voList.add(vo);
+        }
+        return voList;
     }
 
     /**

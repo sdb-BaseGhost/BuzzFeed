@@ -1,14 +1,12 @@
 <script setup>
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { useFeedStore } from '@/stores/feed'
 
 const props = defineProps({
   post: { type: Object, required: true }
 })
 
 const router = useRouter()
-const feedStore = useFeedStore()
 
 const timeAgo = computed(() => {
   const diff = Date.now() - new Date(props.post.publishTime).getTime()
@@ -22,15 +20,11 @@ const timeAgo = computed(() => {
 })
 
 function goToPost() {
-  router.push(`/post/${props.post.postId}`)
+  router.push(`/post/${props.post.itemId}`)
 }
 
 function goToProfile() {
-  router.push(`/profile/${props.post.userId}`)
-}
-
-async function handleLike() {
-  await feedStore.toggleLike(props.post.postId)
+  router.push(`/profile/${props.post.creatorId}`)
 }
 </script>
 
@@ -40,49 +34,29 @@ async function handleLike() {
     @click="goToPost"
   >
     <div class="flex gap-3">
+      <!-- 头像 -->
       <div
-        class="w-10 h-10 rounded-full bg-accent/20 flex-shrink-0 flex items-center justify-center cursor-pointer"
+        class="w-10 h-10 rounded-full bg-accent/20 flex-shrink-0 flex items-center justify-center cursor-pointer overflow-hidden"
         @click.stop="goToProfile"
       >
-        <span class="text-sm font-bold">{{ post.displayName?.charAt(0) }}</span>
+        <img v-if="post.avatar" :src="post.avatar" class="w-full h-full object-cover" />
+        <span v-else class="text-sm font-bold">{{ post.displayName?.charAt(0) || post.username?.charAt(0) }}</span>
       </div>
 
       <div class="flex-1 min-w-0">
+        <!-- 用户名 + 昵称 + 时间 -->
         <div class="flex items-center gap-2">
-          <span class="font-bold text-text-primary truncate">{{ post.displayName }}</span>
+          <span class="font-bold text-text-primary truncate">{{ post.displayName || post.username }}</span>
           <span class="text-text-secondary truncate">@{{ post.username }}</span>
           <span class="text-text-secondary">·</span>
           <span class="text-text-secondary text-sm flex-shrink-0">{{ timeAgo }}</span>
         </div>
 
-        <p class="mt-2 text-text-primary whitespace-pre-wrap break-words">{{ post.shortText }}</p>
+        <!-- 标题 -->
+        <h3 v-if="post.title" class="mt-2 text-text-primary font-semibold break-words">{{ post.title }}</h3>
 
-        <div v-if="post.photos?.length" class="mt-3 grid gap-1 rounded-2xl overflow-hidden" :class="post.photos.length === 1 ? 'grid-cols-1' : 'grid-cols-2'">
-          <img
-            v-for="(photo, idx) in post.photos.slice(0, 4)"
-            :key="idx"
-            :src="photo"
-            class="w-full h-48 object-cover"
-          />
-        </div>
-
-        <div class="flex items-center gap-12 mt-3">
-          <button class="flex items-center gap-1.5 text-text-secondary hover:text-accent transition-colors group">
-            <span class="p-1.5 rounded-full group-hover:bg-accent/10">💬</span>
-            <span class="text-sm">{{ post.commentCount }}</span>
-          </button>
-
-          <button
-            class="flex items-center gap-1.5 transition-colors group"
-            :class="post.isLiked ? 'text-danger' : 'text-text-secondary hover:text-danger'"
-            @click.stop="handleLike"
-          >
-            <span class="p-1.5 rounded-full" :class="post.isLiked ? 'bg-danger/10' : 'group-hover:bg-danger/10'">
-              {{ post.isLiked ? '❤️' : '🤍' }}
-            </span>
-            <span class="text-sm">{{ post.likeCount }}</span>
-          </button>
-        </div>
+        <!-- 正文 -->
+        <p v-if="post.summary" class="mt-1 text-text-primary whitespace-pre-wrap break-words">{{ post.summary }}</p>
       </div>
     </div>
   </article>
