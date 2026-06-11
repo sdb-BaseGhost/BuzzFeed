@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getUser } from '@/api/user'
+import { getFollowStatus } from '@/api/follow'
 import { useAuthStore } from '@/stores/auth'
 import { useFeed } from '@/composables/useFeed'
 import UserAvatar from '@/components/user/UserAvatar.vue'
@@ -12,6 +13,7 @@ const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const user = ref(null)
+const followStatus = ref('NOT_FOLLOWING')
 const loading = ref(true)
 const loadError = ref(false)
 const activeTab = ref('posts')
@@ -27,6 +29,15 @@ async function loadUser() {
   try {
     const res = await getUser(route.params.userId)
     user.value = res.data
+    // 加载关注状态
+    if (!isSelf.value) {
+      try {
+        const statusRes = await getFollowStatus(route.params.userId)
+        followStatus.value = statusRes.data?.status || 'NOT_FOLLOWING'
+      } catch {
+        followStatus.value = 'NOT_FOLLOWING'
+      }
+    }
   } catch {
     loadError.value = true
   } finally {
@@ -80,7 +91,7 @@ function confirmLogout() {
           <FollowButton
             v-if="!isSelf"
             :user-id="user.userId"
-            :initial-following="false"
+            :initial-following="followStatus === 'FOLLOWING' || followStatus === 'MUTUAL_FOLLOW'"
           />
         </div>
 

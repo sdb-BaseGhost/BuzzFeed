@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.sdb.buzzfeed.mapper.FollowMapper">
+
+    <!-- 查询 following 表中的关系记录 -->
+    <select id="selectFollowing" resultType="org.sdb.buzzfeed.entity.FollowRelation">
+        SELECT id, from_user_id AS fromUserId, to_user_id AS toUserId,
+               type, create_time AS createTime, update_time AS updateTime
+        FROM following
+        WHERE from_user_id = #{fromUserId} AND to_user_id = #{toUserId}
+    </select>
+
+    <!-- 新增 following 记录 -->
+    <insert id="insertFollowing">
+        INSERT INTO following (from_user_id, to_user_id, type)
+        VALUES (#{fromUserId}, #{toUserId}, 1)
+    </insert>
+
+    <!-- 更新 following 表的关系状态 -->
+    <update id="updateFollowingType">
+        UPDATE following
+        SET type = #{type}, update_time = NOW(3)
+        WHERE from_user_id = #{fromUserId} AND to_user_id = #{toUserId}
+    </update>
+
+    <!-- 新增 follower 记录 -->
+    <insert id="insertFollower">
+        INSERT INTO follower (from_user_id, to_user_id, type)
+        VALUES (#{fromUserId}, #{toUserId}, 1)
+    </insert>
+
+    <!-- 更新 follower 表的关系状态 -->
+    <update id="updateFollowerType">
+        UPDATE follower
+        SET type = #{type}, update_time = NOW(3)
+        WHERE from_user_id = #{fromUserId} AND to_user_id = #{toUserId}
+    </update>
+
+    <!-- 查询关注列表（我关注了谁）：using idx_following_list -->
+    <select id="selectFollowingList" resultType="org.sdb.buzzfeed.entity.FollowRelation">
+        SELECT id, from_user_id AS fromUserId, to_user_id AS toUserId,
+               type, create_time AS createTime, update_time AS updateTime
+        FROM following
+        WHERE from_user_id = #{fromUserId} AND type = #{type}
+        ORDER BY update_time DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 查询粉丝列表（谁关注了我）：using idx_follower_list -->
+    <select id="selectFollowerList" resultType="org.sdb.buzzfeed.entity.FollowRelation">
+        SELECT id, from_user_id AS fromUserId, to_user_id AS toUserId,
+               type, create_time AS createTime, update_time AS updateTime
+        FROM follower
+        WHERE to_user_id = #{toUserId} AND type = #{type}
+        ORDER BY update_time DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 查询 follower 表中的关系记录 -->
+    <select id="selectFollower" resultType="org.sdb.buzzfeed.entity.FollowRelation">
+        SELECT id, from_user_id AS fromUserId, to_user_id AS toUserId,
+               type, create_time AS createTime, update_time AS updateTime
+        FROM follower
+        WHERE from_user_id = #{fromUserId} AND to_user_id = #{toUserId}
+    </select>
+
+</mapper>

@@ -1,8 +1,9 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { getFollowers } from '@/api/user'
+import { getFollowerList } from '@/api/follow'
 import UserAvatar from '@/components/user/UserAvatar.vue'
+import FollowButton from '@/components/user/FollowButton.vue'
 
 const route = useRoute()
 const users = ref([])
@@ -11,8 +12,8 @@ const loading = ref(true)
 async function loadFollowers() {
   loading.value = true
   try {
-    const res = await getFollowers(route.params.userId)
-    users.value = res.data || []
+    const res = await getFollowerList(route.params.userId)
+    users.value = res.data?.list || []
   } catch {
     users.value = []
   } finally {
@@ -39,20 +40,25 @@ onMounted(loadFollowers)
     </div>
 
     <div v-else>
-      <router-link
+      <div
         v-for="user in users"
         :key="user.userId"
-        :to="`/profile/${user.userId}`"
         class="flex items-center gap-3 px-4 py-3 hover:bg-bg-hover transition-colors border-b border-border-custom"
       >
-        <UserAvatar :username="user.username" size="md" />
+        <router-link :to="`/profile/${user.userId}`" class="contents">
+          <UserAvatar :username="user.username" size="md" />
+        </router-link>
         <div class="min-w-0 flex-1">
-          <div class="text-sm font-bold text-text-primary truncate">{{ user.displayName }}</div>
-          <div class="text-sm text-text-secondary truncate">@{{ user.username }}</div>
-          <div v-if="user.bio" class="text-sm text-text-secondary truncate mt-0.5">{{ user.bio }}</div>
+          <router-link :to="`/profile/${user.userId}`" class="contents">
+            <div class="text-sm font-bold text-text-primary truncate">{{ user.nickname || user.displayName }}</div>
+            <div class="text-sm text-text-secondary truncate">@{{ user.username }}</div>
+          </router-link>
         </div>
-        <span class="text-xs text-text-secondary flex-shrink-0">{{ user.followsNumber ?? 0 }} 关注</span>
-      </router-link>
+        <FollowButton
+          :user-id="user.userId"
+          :initial-following="user.followStatus === 'FOLLOWING' || user.followStatus === 'MUTUAL_FOLLOW'"
+        />
+      </div>
     </div>
   </div>
 </template>

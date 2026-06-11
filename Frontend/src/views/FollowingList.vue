@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { getFollowing } from '@/api/user'
+import { getFollowingList } from '@/api/follow'
 import UserAvatar from '@/components/user/UserAvatar.vue'
 
 const route = useRoute()
@@ -11,8 +11,8 @@ const loading = ref(true)
 async function loadFollowing() {
   loading.value = true
   try {
-    const res = await getFollowing(route.params.userId)
-    users.value = res.data || []
+    const res = await getFollowingList(route.params.userId)
+    users.value = res.data?.list || []
   } catch {
     users.value = []
   } finally {
@@ -47,11 +47,9 @@ onMounted(loadFollowing)
       >
         <UserAvatar :username="user.username" size="md" />
         <div class="min-w-0 flex-1">
-          <div class="text-sm font-bold text-text-primary truncate">{{ user.displayName }}</div>
+          <div class="text-sm font-bold text-text-primary truncate">{{ user.nickname || user.displayName }}</div>
           <div class="text-sm text-text-secondary truncate">@{{ user.username }}</div>
-          <div v-if="user.bio" class="text-sm text-text-secondary truncate mt-0.5">{{ user.bio }}</div>
         </div>
-        <span class="text-xs text-text-secondary flex-shrink-0">{{ user.followerNumber ?? 0 }} 粉丝</span>
       </router-link>
     </div>
   </div>
