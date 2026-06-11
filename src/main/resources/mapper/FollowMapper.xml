@@ -67,4 +67,27 @@
         WHERE from_user_id = #{fromUserId} AND to_user_id = #{toUserId}
     </select>
 
+    <!-- 查询我关注的所有用户ID（Feed流/Fanout用） -->
+    <select id="selectFollowingUserIds" resultType="java.lang.Long">
+        SELECT to_user_id
+        FROM following
+        WHERE from_user_id = #{fromUserId} AND type = 1
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 查询我的所有粉丝用户ID（Fanout用） -->
+    <select id="selectFollowerUserIds" resultType="java.lang.Long">
+        SELECT from_user_id
+        FROM follower
+        WHERE to_user_id = #{toUserId} AND type = 1
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 查询粉丝数量（判断大V用） -->
+    <select id="countFollowers" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM follower
+        WHERE to_user_id = #{toUserId} AND type = 1
+    </select>
+
 </mapper>

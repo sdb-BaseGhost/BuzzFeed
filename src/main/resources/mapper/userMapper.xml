@@ -5,30 +5,14 @@
 
 <mapper namespace="org.sdb.buzzfeed.mapper.UserMapper">
 
-    <!--获取粉丝数量-->
+    <!--获取关注数量-->
     <select id="selectFollowsNumber" resultType="java.lang.Integer">
-        SELECT follower_number
+        SELECT follows_number
         FROM user
         WHERE user_id = #{userId}
     </select>
 
-    <!-- 查询某个用户关注的所有用户ID -->
-    <select id="selectFollowsByUserId" resultType="java.lang.Long">
-        SELECT follow_user_id
-        FROM user_follow
-        WHERE user_id = #{userId}
-        ORDER BY create_time DESC
-    </select>
-
-<!--    查询用户的所有粉丝-->
-    <select id="selectFollowersByUserId" resultType="java.lang.Long">
-        SELECT user_id
-        FROM user_follow
-        WHERE follow_user_id = #{userId}
-        ORDER BY create_time DESC
-    </select>
-
-<!--    查询活跃粉丝-->
+    <!--    查询活跃粉丝-->
     <select id="selectActiveFansByIds" resultType="java.lang.Long">
         SELECT user_id
         FROM user
@@ -39,14 +23,14 @@
         AND is_active = 1
     </select>
 
-<!--    判断是否是活跃粉丝-->
+    <!--    判断是否是活跃粉丝-->
     <select id="isActive" resultType="java.lang.Integer">
         SELECT is_active
         FROM user
         where user_id = #{followId}
     </select>
 
-<!--    筛选出大V-->
+    <!--    筛选出大V-->
     <select id="selectVbyId" resultType="java.lang.Long">
         SELECT user_id
         FROM user
@@ -55,12 +39,5 @@
             #{id}
         </foreach>
         AND follower_number > 2
-    </select>
-
-<!--    查询粉丝数量-->
-    <select id="selectFansCount" resultType="java.lang.Integer">
-        SELECT COUNT(*)
-        FROM user_follow
-        WHERE follow_user_id = #{userId}
     </select>
 </mapper>

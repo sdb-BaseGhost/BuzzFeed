@@ -7,9 +7,6 @@ import java.util.List;
 
 @Mapper
 public interface UserMapper {
-    List<Long> selectFollowsByUserId(Long userId);
-
-    List<Long> selectFollowersByUserId(Long userId);
 
     List<Long> selectActiveFansByIds(List<Long> fansList);
 
@@ -29,6 +26,4 @@ public interface UserMapper {
             "VALUES (#{username}, #{passwordHash}, #{email}, #{displayName}, #{isActive}, #{followerNumber}, #{followsNumber}, #{postCount})")
     @Options(useGeneratedKeys = true, keyProperty = "userId", keyColumn = "user_id")
     int insert(User user);
-
-    Integer selectFansCount(@Param("userId") Long userId);
 }

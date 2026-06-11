@@ -3,6 +3,7 @@ package org.sdb.buzzfeed.controller;
 import lombok.RequiredArgsConstructor;
 import org.sdb.buzzfeed.entity.Result;
 import org.sdb.buzzfeed.entity.User;
+import org.sdb.buzzfeed.mapper.FollowMapper;
 import org.sdb.buzzfeed.mapper.UserMapper;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,6 +16,7 @@ import java.util.stream.Collectors;
 public class UserController {
 
     private final UserMapper userMapper;
+    private final FollowMapper followMapper;
 
     /**
      * 获取指定用户信息（公开资料）
@@ -34,7 +36,7 @@ public class UserController {
      */
     @GetMapping("/{userId}/following")
     public Result getFollowing(@PathVariable Long userId) {
-        List<Long> followIds = userMapper.selectFollowsByUserId(userId);
+        List<Long> followIds = followMapper.selectFollowingUserIds(userId);
         if (followIds == null || followIds.isEmpty()) {
             return Result.success(List.of());
         }
@@ -54,7 +56,7 @@ public class UserController {
      */
     @GetMapping("/{userId}/followers")
     public Result getFollowers(@PathVariable Long userId) {
-        List<Long> fanIds = userMapper.selectFollowersByUserId(userId);
+        List<Long> fanIds = followMapper.selectFollowerUserIds(userId);
         if (fanIds == null || fanIds.isEmpty()) {
             return Result.success(List.of());
         }

@@ -10,6 +10,7 @@ import org.sdb.buzzfeed.entity.User;
 import org.sdb.buzzfeed.entity.vo.FeedItemVO;
 import org.sdb.buzzfeed.mapper.ContentImageMapper;
 import org.sdb.buzzfeed.mapper.ContentVideoMapper;
+import org.sdb.buzzfeed.mapper.FollowMapper;
 import org.sdb.buzzfeed.mapper.OutboxMapper;
 import org.sdb.buzzfeed.mapper.InboxMapper;
 import org.sdb.buzzfeed.mapper.UserMapper;
@@ -27,6 +28,7 @@ import java.util.*;
 public class FeedServiceImpl implements FeedService {
 
     private final UserMapper userMapper;
+    private final FollowMapper followMapper;
     private final OutboxMapper outboxMapper;
     private final InboxMapper inboxMapper;
     private final ContentImageMapper contentImageMapper;
@@ -56,7 +58,7 @@ public class FeedServiceImpl implements FeedService {
         int num = feed.getNum() > 0 ? feed.getNum() : DEFAULT_NUM;
 
         // 1. 获取关注列表
-        List<Long> follows = userMapper.selectFollowsByUserId(userId);
+        List<Long> follows = followMapper.selectFollowingUserIds(userId);
         if (follows == null || follows.isEmpty()) {
             return Collections.emptyList();
         }

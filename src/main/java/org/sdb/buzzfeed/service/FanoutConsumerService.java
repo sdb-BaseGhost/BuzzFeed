@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.sdb.buzzfeed.entity.FanoutMessage;
+import org.sdb.buzzfeed.mapper.FollowMapper;
 import org.sdb.buzzfeed.mapper.InboxMapper;
 import org.sdb.buzzfeed.mapper.UserMapper;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,6 +21,7 @@ import java.util.List;
 public class FanoutConsumerService {
 
     private final UserMapper userMapper;
+    private final FollowMapper followMapper;
     private final InboxMapper inboxMapper;
     private final RedisTemplate<String, String> redisTemplate;
     private final ObjectMapper objectMapper;
@@ -51,14 +53,14 @@ public class FanoutConsumerService {
         }
 
         // 1. 拉取粉丝列表
-        List<Long> fans = userMapper.selectFollowersByUserId(msg.getCreatorId());
+        List<Long> fans = followMapper.selectFollowerUserIds(msg.getCreatorId());
         if (fans == null || fans.isEmpty()) {
             log.info("创作者 {} 没有粉丝，跳过 Fan-out", msg.getCreatorId());
             return;
         }
 
         // 2. 判断是否是大V（粉丝数 > 阈值）
-        Integer fansCount = userMapper.selectFansCount(msg.getCreatorId());
+        Long fansCount = followMapper.countFollowers(msg.getCreatorId());
         boolean isBigV = fansCount != null && fansCount > bigVThreshold;
 
         // 3. 大V只推给活跃粉丝，非大V推给所有粉丝
