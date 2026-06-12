@@ -32,4 +32,15 @@
         WHERE item_id = #{itemId}
     </select>
 
+    <!-- 查询指定用户发布的帖子（状态正常，按发布时间倒序） -->
+    <select id="selectByCreatorId" resultType="org.sdb.buzzfeed.entity.Content">
+        SELECT item_id, creator_id, item_type, title, summary, visibility,
+               status, create_time, publish_time, update_time
+        FROM item_info
+        WHERE creator_id = #{creatorId}
+          AND status = 1
+        ORDER BY publish_time DESC
+        LIMIT #{limit}
+    </select>
+
 </mapper>

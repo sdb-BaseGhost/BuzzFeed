@@ -17,4 +17,13 @@ public class PostController {
     public Result post(@Valid @RequestBody CreatePostDTO dto) {
         return Result.success(postService.postContent(dto));
     }
+
+    /**
+     * 获取指定用户的帖子列表
+     */
+    @GetMapping("/api/post/user/{userId}")
+    public Result getUserPosts(@PathVariable Long userId,
+                               @RequestParam(defaultValue = "20") int limit) {
+        return Result.success(postService.getUserPosts(userId, limit));
+    }
 }

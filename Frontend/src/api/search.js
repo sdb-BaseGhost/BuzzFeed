@@ -11,5 +11,5 @@ export async function search(query) {
     const posts = mockPosts.filter(p => p.shortText.toLowerCase().includes(q))
     return mockResult({ users, posts })
   }
-  return api.get('/search', { params: { q: query } })
+  return api.get('/api/search', { params: { q: query } })
 }

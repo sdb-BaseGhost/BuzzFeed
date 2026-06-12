@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { search } from '@/api/search'
 import FeedItem from '@/components/feed/FeedItem.vue'
 import UserAvatar from '@/components/user/UserAvatar.vue'
@@ -9,13 +9,27 @@ const router = useRouter()
 const query = ref('')
 const results = ref(null)
 const loading = ref(false)
+let debounceTimer = null
 
-async function handleSearch() {
-  if (!query.value.trim()) return
+// 输入即搜索，300ms 防抖
+watch(query, (val) => {
+  clearTimeout(debounceTimer)
+  if (!val.trim()) {
+    results.value = null
+    return
+  }
+  debounceTimer = setTimeout(() => {
+    doSearch(val.trim())
+  }, 300)
+})
+
+async function doSearch(keyword) {
   loading.value = true
   try {
-    const res = await search(query.value)
+    const res = await search(keyword)
     results.value = res.data
+  } catch (e) {
+    console.error('搜索失败', e)
   } finally {
     loading.value = false
   }
@@ -30,9 +44,8 @@ async function handleSearch() {
         <input
           v-model="query"
           type="text"
-          placeholder="搜索用户或帖子"
+          placeholder="搜索用户"
           class="w-full bg-bg-secondary border border-transparent focus:border-accent rounded-full py-3 pl-12 pr-4 text-text-primary placeholder-text-secondary outline-none transition-colors"
-          @keyup.enter="handleSearch"
         />
       </div>
     </header>

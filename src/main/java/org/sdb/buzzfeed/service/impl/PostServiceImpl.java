@@ -4,11 +4,14 @@ import lombok.RequiredArgsConstructor;
 import org.sdb.buzzfeed.entity.Content;
 import org.sdb.buzzfeed.entity.ContentImage;
 import org.sdb.buzzfeed.entity.ContentVideo;
+import org.sdb.buzzfeed.entity.User;
 import org.sdb.buzzfeed.entity.dto.CreatePostDTO;
 import org.sdb.buzzfeed.entity.vo.CreatePostVO;
+import org.sdb.buzzfeed.entity.vo.FeedItemVO;
 import org.sdb.buzzfeed.mapper.ContentImageMapper;
 import org.sdb.buzzfeed.mapper.ContentVideoMapper;
 import org.sdb.buzzfeed.mapper.PostMapper;
+import org.sdb.buzzfeed.mapper.UserMapper;
 import org.sdb.buzzfeed.service.PostService;
 import org.sdb.buzzfeed.utils.UserContext;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,8 +19,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +28,7 @@ public class PostServiceImpl implements PostService {
     private final PostMapper postMapper;
     private final ContentImageMapper contentImageMapper;
     private final ContentVideoMapper contentVideoMapper;
+    private final UserMapper userMapper;
     private final KafkaTemplate<String, String> kafkaTemplate;
 
     @Value("${minio.bucket-name}")
@@ -114,6 +117,89 @@ public class PostServiceImpl implements PostService {
         kafkaTemplate.send(REVIEW_TOPIC, String.valueOf(itemId));
 
         return new CreatePostVO(itemId);
+    }
+
+    @Override
+    public List<FeedItemVO> getUserPosts(Long userId, int limit) {
+        List<Content> contentList = postMapper.selectByCreatorId(userId, limit);
+        if (contentList == null || contentList.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return convertToVO(contentList);
+    }
+
+    /**
+     * 将 Content 列表转换为 FeedItemVO 列表
+     */
+    private List<FeedItemVO> convertToVO(List<Content> contentList) {
+        // 收集 itemId 分类
+        List<Long> imageItemIds = new ArrayList<>();
+        List<Long> videoItemIds = new ArrayList<>();
+        for (Content c : contentList) {
+            if (c.getItemType() == 1) imageItemIds.add(c.getItemId());
+            else if (c.getItemType() == 2) videoItemIds.add(c.getItemId());
+        }
+
+        // 查用户信息
+        User user = userMapper.selectById(contentList.get(0).getCreatorId());
+
+        // 批量查图片
+        String urlPrefix = minioEndpoint + "/" + bucketName + "/";
+        Map<Long, List<String>> imageMap = new HashMap<>();
+        if (!imageItemIds.isEmpty()) {
+            List<ContentImage> images = contentImageMapper.selectByItemIds(imageItemIds);
+            for (ContentImage img : images) {
+                String imageUrl = img.getImageUri().startsWith("http")
+                        ? img.getImageUri()
+                        : urlPrefix + img.getImageUri();
+                imageMap.computeIfAbsent(img.getItemId(), k -> new ArrayList<>()).add(imageUrl);
+            }
+        }
+
+        // 批量查视频
+        Map<Long, ContentVideo> videoMap = new HashMap<>();
+        if (!videoItemIds.isEmpty()) {
+            List<ContentVideo> videos = contentVideoMapper.selectByItemIds(videoItemIds);
+            for (ContentVideo v : videos) {
+                videoMap.putIfAbsent(v.getItemId(), v);
+            }
+        }
+
+        // 组装 VO
+        List<FeedItemVO> voList = new ArrayList<>(contentList.size());
+        for (Content c : contentList) {
+            FeedItemVO vo = new FeedItemVO();
+            vo.setItemId(c.getItemId());
+            vo.setCreatorId(c.getCreatorId());
+            vo.setItemType(c.getItemType());
+            vo.setTitle(c.getTitle());
+            vo.setSummary(c.getSummary());
+            vo.setPublishTime(c.getPublishTime());
+
+            if (user != null) {
+                vo.setUsername(user.getUsername());
+                vo.setDisplayName(user.getDisplayName());
+                vo.setAvatar(user.getAvatar());
+            }
+
+            List<String> urls = imageMap.get(c.getItemId());
+            if (urls != null && !urls.isEmpty()) vo.setImageUrls(urls);
+
+            ContentVideo video = videoMap.get(c.getItemId());
+            if (video != null) {
+                vo.setVideoUrl(video.getVideoUrl());
+                if (video.getCoverUrl() != null && !video.getCoverUrl().isBlank()) {
+                    String coverUrl = video.getCoverUrl().startsWith("http")
+                            ? video.getCoverUrl()
+                            : urlPrefix + video.getCoverUrl();
+                    vo.setVideoCoverUrl(coverUrl);
+                }
+                vo.setVideoDuration(video.getDuration());
+            }
+
+            voList.add(vo);
+        }
+        return voList;
     }
 }
 

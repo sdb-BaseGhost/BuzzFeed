@@ -64,3 +64,17 @@ export async function addComment(postId, content) {
   }
   return api.post(`/post/${postId}/comment`, { content })
 }
+
+/**
+ * 获取指定用户的帖子列表
+ * @param {number} userId
+ * @param {number} [limit=20]
+ */
+export async function getUserPosts(userId, limit = 20) {
+  if (USE_MOCK) {
+    await delay()
+    const userPosts = mockPosts.filter(p => String(p.creatorId) === String(userId))
+    return mockResult(userPosts.slice(0, limit))
+  }
+  return api.get(`/api/post/user/${userId}`, { params: { limit } })
+}

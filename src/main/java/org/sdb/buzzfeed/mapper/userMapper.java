@@ -26,4 +26,8 @@ public interface UserMapper {
             "VALUES (#{username}, #{passwordHash}, #{email}, #{displayName}, #{isActive}, #{followerNumber}, #{followsNumber}, #{postCount})")
     @Options(useGeneratedKeys = true, keyProperty = "userId", keyColumn = "user_id")
     int insert(User user);
+
+    @Select("SELECT * FROM user WHERE username LIKE CONCAT('%', #{keyword}, '%') " +
+            "OR display_name LIKE CONCAT('%', #{keyword}, '%') LIMIT 20")
+    List<User> searchByKeyword(@Param("keyword") String keyword);
 }

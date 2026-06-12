@@ -3,8 +3,8 @@ import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getUser } from '@/api/user'
 import { getFollowStatus } from '@/api/follow'
+import { getUserPosts } from '@/api/post'
 import { useAuthStore } from '@/stores/auth'
-import { useFeed } from '@/composables/useFeed'
 import UserAvatar from '@/components/user/UserAvatar.vue'
 import FollowButton from '@/components/user/FollowButton.vue'
 import FeedItem from '@/components/feed/FeedItem.vue'
@@ -18,8 +18,7 @@ const loading = ref(true)
 const loadError = ref(false)
 const activeTab = ref('posts')
 const showLogoutConfirm = ref(false)
-
-const { posts, loadFeed } = useFeed()
+const posts = ref([])
 
 const isSelf = computed(() => authStore.currentUser?.userId == route.params.userId)
 
@@ -29,6 +28,9 @@ async function loadUser() {
   try {
     const res = await getUser(route.params.userId)
     user.value = res.data
+    // 加载该用户的帖子
+    const postsRes = await getUserPosts(route.params.userId)
+    posts.value = postsRes.data || []
     // 加载关注状态
     if (!isSelf.value) {
       try {
