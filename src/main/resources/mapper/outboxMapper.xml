@@ -13,7 +13,7 @@
         <foreach collection="influencer" item="id" open="(" separator="," close=")">
             #{id}
         </foreach>
-        order by publish_time desc
+        order by publish_time desc, item_id desc
         limit #{num}
     </select>
 
@@ -28,7 +28,7 @@
                status
         FROM item_info
         WHERE creator_id = #{creatorId} AND status = 1
-        ORDER BY publish_time DESC
+        ORDER BY publish_time DESC, item_id DESC
         LIMIT #{num}
     </select>
 

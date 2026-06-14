@@ -27,7 +27,7 @@
         LEFT JOIN item_info c ON i.content_id = c.item_id
         WHERE i.user_id = #{userId}
           AND i.publish_time &lt; #{lastTime}
-        ORDER BY i.publish_time DESC
+        ORDER BY i.publish_time DESC, i.content_id DESC
             LIMIT #{num}
     </select>
 
@@ -45,7 +45,7 @@
         LEFT JOIN item_info c ON i.content_id = c.item_id
         WHERE i.user_id = #{userId}
           AND (i.publish_time &lt; #{lastTime} OR (i.publish_time = #{lastTime} AND i.content_id &lt; #{lastContentId}))
-        ORDER BY i.publish_time DESC
+        ORDER BY i.publish_time DESC, i.content_id DESC
             LIMIT #{num}
     </select>
 

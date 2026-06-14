@@ -7,6 +7,7 @@ import org.sdb.buzzfeed.entity.FanoutMessage;
 import org.sdb.buzzfeed.mapper.FollowMapper;
 import org.sdb.buzzfeed.mapper.InboxMapper;
 import org.sdb.buzzfeed.mapper.UserMapper;
+import org.sdb.buzzfeed.utils.RedisFeedHelper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -23,6 +24,7 @@ public class FanoutConsumerService {
     private final UserMapper userMapper;
     private final FollowMapper followMapper;
     private final InboxMapper inboxMapper;
+    private final RedisFeedHelper redisFeedHelper;
     private final RedisTemplate<String, String> redisTemplate;
     private final ObjectMapper objectMapper;
 
@@ -87,6 +89,14 @@ public class FanoutConsumerService {
             log.info("Fan-out 批量写入收件箱: contentId={}, 本批 {} 人, 进度 {}/{}",
                      msg.getContentId(), batch.size(),
                      Math.min(i + BATCH_SIZE, targetFans.size()), targetFans.size());
+
+            // Pipeline 写入 Redis inbox ZSET（缓存加速，失败不阻塞主流程）
+            try {
+                redisFeedHelper.batchAddInbox(batch, msg.getContentId(), msg.getPublishTime());
+            } catch (Exception e) {
+                log.warn("Redis inbox 写入失败，不影响主流程: contentId={}, error={}",
+                         msg.getContentId(), e.getMessage());
+            }
         }
 
         log.info("Fan-out 完成: contentId={}, 总共推送 {} 人", msg.getContentId(), targetFans.size());

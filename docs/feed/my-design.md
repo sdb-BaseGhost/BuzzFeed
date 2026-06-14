@@ -59,11 +59,12 @@ SELECT content_id, publish_time FROM inbox WHERE user_id = 111 AND
 (publish_time < ts OR (publish_time = ts AND content_id < last_content_id))
 ORDER BY publish__time DESC LIMIT N
 
-### 5、使用Redis ZSET实现收件箱
-key为inbox_{userId}，member为contentID， score为发布时间戳
+### 5、使用Redis ZSET实现收发件箱
+key为outbox/inbox_{userId}，member为contentID， score为发布时间戳
 
 参考数据库的联合索引方式，Redis上滑获取，当score相同时，按照member值从小到大排序。
 但是member值是按字典序，所以需要往member值前面补0，规定member长度为20，不足往前面补零，这样就能达到和数据库联合索引的效果了。
+
 
 ### 6、用户读取侧如何体现推拉结合模式
 工作流程：

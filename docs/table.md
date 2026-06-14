@@ -73,7 +73,7 @@ CREATE TABLE `inbox` (
 `id` bigint NOT NULL AUTO_INCREMENT COMMENT '自增主键，无特殊含义',
 `user_id` bigint NOT NULL COMMENT '用户id',
 `content_id` bigint NOT NULL COMMENT '内容id',
-`publish_time` date NOT NULL COMMENT '内容发布时间',
+`publish_time` datetime(3) NOT NULL COMMENT '内容发布时间',
 PRIMARY KEY (`id`),
 KEY `idx_user_publish_content` (`user_id`,`publish_time`,`content_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1740019 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
