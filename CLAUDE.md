@@ -129,6 +129,8 @@ View (views/)
 - 代码目录树 → [`docs/codemap.md`](docs/codemap.md)
 - 数据库 DDL → [`docs/table.md`](docs/table.md)
 
+> **Push 规则**：每次 push 前，把本次会话实现的功能更新到 `docs/技术文档.md` 对应模块中（请求链路、代码位置、设计决策），不要在 CLAUDE.md 中写开发日志。
+
 各功能模块详细设计见 `docs/` 下对应子目录：
 
 | 功能 | 文档路径 |
@@ -151,59 +153,6 @@ MinIO      → localhost:9000  (minioadmin)
 ```
 
 启动: `mvn spring-boot:run` (8000) + `cd Frontend && npm run dev` (5173)
-
----
-
-## 功能开发日志 ⭐
-
-> **规则**：每次用户确认要 push 时，Claude 必须把本次会话实现的功能更新到下方日志中。
-> 目的是让用户随时清楚"这次做了什么、怎么做的"，保持对项目的掌控感。
->
-> 格式要求：
-> - 每次 push 一条记录，包含 **日期**、**功能标题**、**关键实现细节**
-> - 细节要写到"面试能讲出来"的程度，不要只写"实现了XX功能"
-> - 如果涉及多个模块，分模块列清楚
-
-### 日志
-
-<!-- 在此处追加，最新记录放最上面 -->
-
-#### 2026-06-14 Feed 流 Redis 多级缓存 + 排序修复
-
-**1. RedisFeedHelper — Feed 流 Redis 操作封装（新建）**
-- 封装 inbox/outbox ZSET + content Hash 的所有读写，供 FeedServiceImpl / FanoutConsumerService / ContentCacheConsumer 共用
-- ZSET 游标分页：首次 ZREVRANGE，翻页时先取同 score 中 member < cursor 的部分，再取严格更旧的 score，模拟数据库联合索引 (publish_time DESC, content_id DESC) 的效果
-- contentId 零补到 20 位（`%020d`）保证字典序 = 数值序
-- Pipeline 批量写入收件箱（Fanout 场景，每批 200 人）
-- **修复 ClassCastException**：`executePipelined` 配合 StringRedisSerializer 返回的是 `Map<String,String>`，不能强转 `Map<byte[],byte[]>`
-
-**2. FeedServiceImpl 重构：Redis 优先 + MySQL 回源**
-- `loadInboxFromRedisOrMysql`：收件箱先查 Redis ZSET（`getInboxPage`），miss 回源 inbox 表（`downFeedUp`）
-- `loadOutboxFromRedisOrMysql`：发件箱先查 Redis ZSET（`getOutboxPage`），miss 回源 item_info 表（`getContentByCreator`）
-- `loadContentsFromRedisOrMysql`：内容详情先 Pipeline 批量查 Redis Hash，miss 的逐条回源 MySQL `selectById`
-- 移除了 `filterOld` 方法 —— Redis 游标分页本身已自带游标过滤，不再需要内存过滤
-
-**3. FanoutConsumerService：Fanout 推送同步写 Redis**
-- 每批写完 MySQL inbox 后，Pipeline 写入 Redis inbox ZSET（`batchAddInbox`）
-- Redis 写入失败 catch 住，不影响主流程（MySQL inbox 是主存储，Redis 是加速缓存）
-
-**4. ContentCacheConsumer + ContentCacheService（新建）**
-- Canal binlog 消费者，监听 Kafka `content-change` topic（Canal 推送的 `item_info` 表变更）
-- INSERT/UPDATE(status=1) → 写入 Redis content Hash + outbox ZSET
-- UPDATE(下架) / DELETE → 清除 Redis content Hash + outbox ZSET
-- 注意：本地未部署 Canal，此消费者暂不生效；outbox/content 缓存目前依赖 KafkaConsumerService 审核通过后直接写入（待补充）
-
-**5. 排序修复（Bug Fix）**
-- **inbox 表 `publish_time` 类型从 `DATE` 改为 `datetime(3)`** —— 原来 DATE 只存日期，同一天所有内容 publish_time 完全相同，导致排序混乱
-- **InboxMapper** `downFeed` / `downFeedUp` 的 ORDER BY 加了 `i.content_id DESC` 二级排序
-- **OutboxMapper** `getContent` / `getContentByCreator` 的 ORDER BY 加了 `item_id DESC` 二级排序
-- 解决了 publish_time 相同时 MySQL 返回顺序不确定的问题，保证游标分页不会跳过或重复
-
-**6. 技术文档更新**
-- `docs/技术文档.md` —— 新增完整项目手册（技术栈、功能详解、代码位置、设计决策）
-- `docs/table.md` —— inbox 表 DDL 更新为 datetime(3)
-
----
 
 ---
 
