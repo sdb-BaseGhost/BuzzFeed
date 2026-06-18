@@ -20,11 +20,17 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function fetchCurrentUser() {
-    if (!token.value) return
+    if (!token.value) {
+      console.log('[Auth] fetchCurrentUser: no token, skip')
+      return
+    }
     try {
+      console.log('[Auth] fetchCurrentUser: token exists, calling /api/auth/me ...')
       const res = await getCurrentUser()
+      console.log('[Auth] fetchCurrentUser: success', res.data)
       currentUser.value = res.data
-    } catch {
+    } catch (e) {
+      console.error('[Auth] fetchCurrentUser: failed, will logout', e)
       logout()
     }
   }

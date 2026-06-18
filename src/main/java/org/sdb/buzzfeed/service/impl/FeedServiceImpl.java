@@ -40,11 +40,8 @@ public class FeedServiceImpl implements FeedService {
     private final RedisFeedHelper redisFeedHelper;
     private final RedisTemplate<String, String> redisTemplate;
 
-    @Value("${minio.endpoint}")
-    private String minioEndpoint;
-
-    @Value("${minio.bucket-name}")
-    private String bucketName;
+    @Value("${minio.file-url-prefix:/files}")
+    private String fileUrlPrefix;
 
     @Value("${feed.big-v-threshold:2}")
     private int bigVThreshold;
@@ -244,7 +241,7 @@ public class FeedServiceImpl implements FeedService {
         }
 
         // 3. 批量查图片，按 itemId 分组（拼接完整 URL）
-        String urlPrefix = minioEndpoint + "/" + bucketName + "/";
+        String urlPrefix = fileUrlPrefix + "/";
         Map<Long, List<String>> imageMap = new HashMap<>();
         if (!imageItemIds.isEmpty()) {
             List<ContentImage> images = contentImageMapper.selectByItemIds(imageItemIds);

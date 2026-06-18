@@ -31,11 +31,11 @@ public class PostServiceImpl implements PostService {
     private final UserMapper userMapper;
     private final KafkaTemplate<String, String> kafkaTemplate;
 
+    @Value("${minio.file-url-prefix:/files}")
+    private String fileUrlPrefix;
+
     @Value("${minio.bucket-name}")
     private String bucketName;
-
-    @Value("${minio.endpoint}")
-    private String minioEndpoint;
 
     private static final String REVIEW_TOPIC = "content-review";
 
@@ -80,7 +80,7 @@ public class PostServiceImpl implements PostService {
         // 4. 根据已上传的 URL 落库（文件已在 UploadController 阶段传到 MinIO）
         if (contentType == 1 && imageUrls != null) {
             List<ContentImage> imageList = new ArrayList<>();
-            String prefix = minioEndpoint + "/" + bucketName + "/";
+            String prefix = fileUrlPrefix + "/";
             for (int i = 0; i < imageUrls.size(); i++) {
                 String url = imageUrls.get(i);
                 ContentImage img = new ContentImage();
@@ -93,7 +93,7 @@ public class PostServiceImpl implements PostService {
         }
 
         if (contentType == 2 && videoUrl != null) {
-            String prefix = minioEndpoint + "/" + bucketName + "/";
+            String prefix = fileUrlPrefix + "/";
             String objectName = videoUrl.startsWith(prefix) ? videoUrl.substring(prefix.length()) : videoUrl;
             ContentVideo cv = new ContentVideo();
             cv.setItemId(itemId);
@@ -144,7 +144,7 @@ public class PostServiceImpl implements PostService {
         User user = userMapper.selectById(contentList.get(0).getCreatorId());
 
         // 批量查图片
-        String urlPrefix = minioEndpoint + "/" + bucketName + "/";
+        String urlPrefix = fileUrlPrefix + "/";
         Map<Long, List<String>> imageMap = new HashMap<>();
         if (!imageItemIds.isEmpty()) {
             List<ContentImage> images = contentImageMapper.selectByItemIds(imageItemIds);

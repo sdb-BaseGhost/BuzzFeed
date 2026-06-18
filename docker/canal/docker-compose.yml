@@ -1,0 +1,42 @@
+version: '3.8'
+
+# Canal Server + Kafka Adapter
+# 前置条件：
+#   1. MySQL 已开启 binlog: log_bin=ON, binlog_format=ROW, binlog_row_image=FULL
+#   2. MySQL 中创建 canal 账号:
+#      CREATE USER 'canal'@'%' IDENTIFIED BY 'canal';
+#      GRANT SELECT, REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'canal'@'%';
+#      FLUSH PRIVILEGES;
+#   3. Kafka 已启动（localhost:9092）
+#   4. Docker 中的 Kafka 使用 host.docker.internal:9092 访问宿主机
+
+services:
+  canal-server:
+    image: canal/canal-server:v1.1.7
+    container_name: canal-server
+    ports:
+      - "11111:11111"   # Canal 服务端口
+      - "11112:11112"   # Canal Admin 端口（可选）
+    environment:
+      # MySQL 连接配置
+      canal.instance.master.address: host.docker.internal:3306
+      canal.instance.dbUsername: canal
+      canal.instance.dbPassword: canal
+      canal.instance.defaultDatabaseName: buzzfeed
+      # 表过滤：只监听 item_info 表
+      canal.instance.filter.regex: buzzfeed\\.item_info
+      canal.instance.filter.black.regex:
+      # Kafka 输出配置
+      canal.serverMode: kafka
+      kafka.servers: host.docker.internal:9092
+      kafka.kerberos.enable: "false"
+      # Canal 自动创建 topic
+      kafka.producer.acks: all
+      kafka.producer.retries: 3
+      # 每个 instance 对应的 topic（也可以在 instance.properties 中配置）
+    volumes:
+      # 挂载 instance 配置（可选，环境变量优先）
+      - ./conf/instance.properties:/home/admin/canal-server/conf/buzzfeed/instance.properties
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped

@@ -14,11 +14,8 @@ public class UploadController {
 
     private final MinioService minioService;
 
-    @Value("${minio.endpoint}")
-    private String minioEndpoint;
-
-    @Value("${minio.bucket-name}")
-    private String bucketName;
+    @Value("${minio.file-url-prefix:/files}")
+    private String fileUrlPrefix;
 
     @PostMapping("/upload/image")
     public Result uploadImage(@RequestParam("file") MultipartFile file) {
@@ -36,9 +33,9 @@ public class UploadController {
         }
         try {
             MinioService.UploadResult uploadResult = minioService.upload(file, directory);
-            String url = minioEndpoint + "/" + bucketName + "/" + uploadResult.getObjectName();
+            String url = fileUrlPrefix + "/" + uploadResult.getObjectName();
             String coverUrl = uploadResult.getCoverUrl() != null
-                    ? minioEndpoint + "/" + bucketName + "/" + uploadResult.getCoverUrl()
+                    ? fileUrlPrefix + "/" + uploadResult.getCoverUrl()
                     : null;
             return Result.success(new UploadVO(url, uploadResult.getObjectName(), coverUrl));
         } catch (Exception e) {

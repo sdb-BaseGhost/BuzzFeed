@@ -46,6 +46,7 @@ server:
 
 minio:
   endpoint: http://localhost:9000
+  file-url-prefix: /files
   access-key: minioadmin
   secret-key: minioadmin
   bucket-name: buzzfeed

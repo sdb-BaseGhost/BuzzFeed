@@ -21,8 +21,8 @@ public class MinioService {
     private final MinioClient minioClient;
     private final VideoTranscodeService transcodeService;
 
-    @Value("${minio.endpoint}")
-    private String endpoint;
+    @Value("${minio.file-url-prefix:/files}")
+    private String fileUrlPrefix;
 
     @Value("${minio.bucket-name}")
     private String bucketName;
@@ -162,6 +162,6 @@ public class MinioService {
     }
 
     public String getFileUrl(String objectName) {
-        return endpoint + "/" + bucketName + "/" + objectName;
+        return fileUrlPrefix + "/" + objectName;
     }
 }
