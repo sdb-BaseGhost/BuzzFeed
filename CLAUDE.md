@@ -3,14 +3,14 @@
 ## 项目概述
 
 基于《亿级流量系统架构设计与实战》(李琛轩) 构建的社交 Feed 流系统，对标微博/Twitter 的信息流架构。
-**秋招项目**，核心亮点：推拉结合 Feed 流、Kafka 异步解耦、多级缓存、Canal 增量同步。
+核心亮点：推拉结合 Feed 流、Kafka 异步解耦、多级缓存、Canal 增量同步。
 
 ---
 
 ## 技术栈
 
 ### 后端
-Java 17 · Spring Boot 3.5.6 · MyBatis · MySQL 8.0 · Redis + Caffeine · Kafka · MinIO · Canal · JWT
+Java 17 · Spring Boot 3.5.6 · MyBatis · MySQL 8.0 · Redis · Kafka · MinIO · Canal · JWT · JUnit 5
 
 ### 前端
 Vue 3 (Composition API `<script setup>`) · Vite · Pinia · Vue Router · Axios · Tailwind CSS
@@ -90,77 +90,43 @@ View (views/)
 - `true` → 走 mock 数据 (独立开发前端 UI)
 - `false` → 走真实后端接口 (联调/生产)
 
-### 前端端口
-
-| 环境 | 前端 | 后端 |
-|------|------|------|
-| 开发 | localhost:5173 | localhost:8000 |
-| 代理 | Vite proxy 或直接 axios baseURL | — |
-
-### CORS
-
-后端 `SecurityConfig.java` 已允许 `localhost:5173` 和 `localhost:5174`。
-新增环境需同步修改 `corsConfigurationSource()`。
-
 ---
 
-## API 路由总表
+## 开发规范
 
-| 方法 | 路径 | 前端文件 | 后端文件 | 状态 |
-|------|------|---------|---------|------|
-| POST | `/api/auth/register` | `api/auth.js` | `AuthController.java` | ✅ 已完成 |
-| POST | `/api/auth/login` | `api/auth.js` | `AuthController.java` | ✅ 已完成 |
-| POST | `/api/auth/logout` | `api/auth.js` | `AuthController.java` | ✅ 已完成 |
-| GET | `/api/auth/me` | `api/auth.js` | `AuthController.java` | ✅ 已完成 |
-| POST | `/post` | `api/post.js` | `PostController.java` | ✅ 已完成 |
-| POST | `/feed/getFeed` | `api/feed.js` | `FeedController.java` | ✅ 已完成 |
-| GET | `/user/{id}` | `api/user.js` | 待开发 | 🔲 mock only |
-| POST | `/user/{id}/follow` | `api/user.js` | 待开发 | 🔲 mock only |
-| DELETE | `/user/{id}/follow` | `api/user.js` | 待开发 | 🔲 mock only |
-| POST | `/post/{id}/like` | `api/post.js` | 待开发 | 🔲 mock only |
-| GET | `/post/{id}` | `api/post.js` | 待开发 | 🔲 mock only |
-| GET | `/post/{id}/comments` | `api/post.js` | 待开发 | 🔲 mock only |
-| POST | `/post/{id}/comment` | `api/post.js` | 待开发 | 🔲 mock only |
+### TDD (测试驱动开发)
 
----
+**写设计前先写测试**，用测试精确描述需求。流程：
 
-## 项目结构 & 功能文档
+```
+1. 先写测试 → 明确接口输入/输出和边界条件
+2. 再写实现 → 通过测试即可
+3. 重构优化 → 测试保证不回退
+```
+
+后端测试使用 Java 17 + JUnit 5。
+
+### 文档分层
+
+| 文件 | 定位 | 改动时机 |
+|------|------|---------|
+| `CLAUDE.md` (根) | 稳定项目级信息：技术栈、架构风格、通用规范 | 新模块上线、技术栈变化、规范变更 |
+| `docs/{module}/CLAUDE.md` | 模块设计文档：做什么、涉及文件、接口约束、模块间交互 | 设计决策变更、新增接口约束 |
+| `docs/技术文档.md` | **唯一开发日志**：每次会话做了什么、关键决策、变更文件 | 每次会话结束 |
+
+> **禁止**在 CLAUDE.md 中写实现过程和临时决策。
+
+### 项目结构 & 模块文档
 
 - 代码目录树 → [`docs/codemap.md`](docs/codemap.md)
 - 数据库 DDL → [`docs/table.md`](docs/table.md)
-
-> **Push 规则**：每次 push 前，把本次会话实现的功能更新到 `docs/技术文档.md` 对应模块中（请求链路、代码位置、设计决策），不要在 CLAUDE.md 中写开发日志。
-
-各功能模块详细设计见 `docs/` 下对应子目录：
+- 错误反思 → [`FEEDBACK.md`](FEEDBACK.md)
 
 | 功能 | 文档路径 |
 |------|---------|
 | 登录注册 | [`docs/auth/CLAUDE.md`](docs/auth/CLAUDE.md) |
 | 发帖 (图文/视频/文本) | [`docs/post/CLAUDE.md`](docs/post/CLAUDE.md) |
 | Feed 流 | [`docs/feed/CLAUDE.md`](docs/feed/CLAUDE.md) |
+| 关注/粉丝 | [`docs/follow/CLAUDE.md`](docs/follow/CLAUDE.md) |
 | 评论 | [`docs/comment/CLAUDE.md`](docs/comment/CLAUDE.md) |
 | 点赞 | [`docs/like/CLAUDE.md`](docs/like/CLAUDE.md) |
-
----
-
-## 本地开发环境
-
-```
-MySQL 8.0  → localhost:3306  (buzzfeed / 1234)
-Redis      → localhost:6379  (密码: 123456)
-Kafka      → localhost:9092
-MinIO      → localhost:9000  (minioadmin)
-```
-
-启动: `mvn spring-boot:run` (8000) + `cd Frontend && npm run dev` (5173)
-
----
-
-## 秋招面试要点
-
-1. **推拉结合 Feed 流**: 大V拉 + 普通推，多路归并 K Sorted Lists
-2. **Kafka 异步解耦**: 发帖 → 审核 → Fan-out，全链路异步
-3. **多级缓存**: Caffeine (L1) + Redis (L2) + MySQL (L3)
-4. **游标分页**: 基于 (time, id) 避免深分页
-5. **Canal 增量同步**: MySQL binlog → Redis 缓存一致性
-6. **Redis ZSET**: 收件箱/发件箱排序 + Score 复合键

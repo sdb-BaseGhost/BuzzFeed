@@ -6,7 +6,7 @@
 <mapper namespace="org.sdb.buzzfeed.mapper.InboxMapper">
 <!--    插入用户收件箱-->
     <insert id="insertInbox">
-        INSERT INTO inbox (user_id, content_id, publish_time)
+        INSERT IGNORE INTO inbox (user_id, content_id, publish_time)
         VALUES
         <foreach collection="activeFans" item="uid" separator=",">
             (#{uid}, #{contentId}, #{publishTime})

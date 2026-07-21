@@ -1,5 +1,6 @@
 package org.sdb.buzzfeed.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
@@ -12,35 +13,55 @@ import org.springframework.util.backoff.FixedBackOff;
 @Configuration
 public class KafkaConfig {
 
+    @Value("${feed.executor-concurrency:3}")
+    private int executorConcurrency;
+
     /**
-     * Fan-out 消费者容器工厂
-     * concurrency=3：3个消费者线程并行消费
-     * 有限重试3次 + DLQ（死信队列）
+     * Dispatcher 容器工厂：单线程，避免重复分片
      */
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, String>
-            fanoutListenerContainerFactory(
+            dispatcherListenerContainerFactory(
                 ConsumerFactory<String, String> consumerFactory,
                 KafkaTemplate<String, String> kafkaTemplate) {
 
         ConcurrentKafkaListenerContainerFactory<String, String> factory =
             new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory);
-        factory.setConcurrency(3);
+        factory.setConcurrency(1);
 
-        // 最多重试3次，每次间隔固定1秒
         FixedBackOff backOff = new FixedBackOff(1000L, 3L);
-
-        // 重试3次仍然失败 -> 发送到 DLQ
         DeadLetterPublishingRecoverer recoverer =
             new DeadLetterPublishingRecoverer(kafkaTemplate);
-
         DefaultErrorHandler errorHandler = new DefaultErrorHandler(recoverer, backOff);
-
-        // 业务异常不重试，直接进DLQ
         errorHandler.addNotRetryableExceptions(IllegalArgumentException.class);
-
         factory.setCommonErrorHandler(errorHandler);
+
+        return factory;
+    }
+
+    /**
+     * Executor 容器工厂：多线程并行消费子任务
+     * 通过 feed.executor-concurrency 配置线程数
+     */
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, String>
+            executorListenerContainerFactory(
+                ConsumerFactory<String, String> consumerFactory,
+                KafkaTemplate<String, String> kafkaTemplate) {
+
+        ConcurrentKafkaListenerContainerFactory<String, String> factory =
+            new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(consumerFactory);
+        factory.setConcurrency(executorConcurrency);
+
+        FixedBackOff backOff = new FixedBackOff(1000L, 3L);
+        DeadLetterPublishingRecoverer recoverer =
+            new DeadLetterPublishingRecoverer(kafkaTemplate);
+        DefaultErrorHandler errorHandler = new DefaultErrorHandler(recoverer, backOff);
+        errorHandler.addNotRetryableExceptions(IllegalArgumentException.class);
+        factory.setCommonErrorHandler(errorHandler);
+
         return factory;
     }
 }

@@ -11,6 +11,28 @@ export default defineConfig({
   },
   server: {
     port: 5173,
-    host: '0.0.0.0'
+    host: '0.0.0.0',
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true
+      },
+      '/post': {
+        target: 'http://localhost:8000',
+        changeOrigin: true
+      },
+      '/feed': {
+        target: 'http://localhost:8000',
+        changeOrigin: true
+      },
+      '/upload': {
+        target: 'http://localhost:8000',
+        changeOrigin: true
+      },
+      '/files': {
+        target: 'http://localhost:8000',
+        changeOrigin: true
+      }
+    }
   }
 })

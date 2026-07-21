@@ -9,9 +9,9 @@
 | 层 | 文件 | 职责 |
 |----|------|------|
 | Controller | `controller/AuthController.java` | 注册/登录/登出/me 四个端点 |
-| Service | `service/AuthService.java` + `impl/AuthServiceImpl.java` | 密码加密、JWT 生成、用户查询 |
-| Mapper | `mapper/userMapper.java` + `.xml` | 用户 CRUD |
-| 工具 | `utils/JwtUtil.java` | JWT 签发/解析 |
+| Service | `service/AuthService.java` + `impl/AuthServiceImpl.java` | 密码加密、JWT 生成、用户查询、Redis 活跃标记 |
+| Mapper | `mapper/UserMapper.java` + `.xml` | 用户 CRUD |
+| 工具 | `utils/JwtUtil.java` | JWT 签发/解析 (HS256, 24h 有效期) |
 | 工具 | `utils/JwtInterceptor.java` | 请求拦截，解析 token 写入 UserContext |
 | 工具 | `utils/UserContext.java` | ThreadLocal 存储当前 userId |
 | 配置 | `config/SecurityConfig.java` | BCrypt PasswordEncoder + CORS + 无状态 Session |
@@ -44,17 +44,9 @@ GET  /api/auth/me          Header: Authorization: Bearer <token>
 
 `user` 表，字段: user_id(PK) / username(UK) / password_hash / email / display_name / bio / avatar / is_active / follower_number / follows_number / post_count
 
-## 已完成
+## 设计决策
 
-- [x] 注册 (BCrypt 加密密码)
-- [x] 登录 (JWT 返回 token)
-- [x] 登出 (前端清 token)
-- [x] /me 接口
-- [x] JWT 拦截器 + UserContext
-- [x] SecurityConfig 无状态 + CORS
-
-## 待开发
-
-- [ ] Token 刷新机制 (Refresh Token)
-- [ ] 用户信息编辑 (头像/昵称/简介)
-- [ ] 用户主页接口 (发帖数/关注数/粉丝数)
+- 密码用 BCrypt 哈希，不存明文
+- JWT HS256，有效期 24 小时
+- 登录时写 `active:user:{id}` (TTL 7天)，Fanout 用此判断是否推给该用户
+- UserContext 用 ThreadLocal，Service 层不用每方法传 userId

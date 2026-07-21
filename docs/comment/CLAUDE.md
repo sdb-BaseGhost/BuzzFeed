@@ -4,7 +4,7 @@
 
 支持对帖子发表评论及二级回复，评论数 Redis 计数，Kafka 异步通知被评论者。
 
-## 涉及文件 (待开发)
+## 涉及文件 (待实现)
 
 | 层 | 文件 | 职责 |
 |----|------|------|
@@ -12,7 +12,6 @@
 | Service | `service/CommentService.java` + `impl/CommentServiceImpl.java` | 评论业务逻辑 |
 | Mapper | `mapper/CommentMapper.java` + `.xml` | 评论 CRUD |
 | 实体 | `entity/Comment.java` | 评论实体 (待建) |
-| Service | `KafkaConsumerService.java` | 扩展：监听评论通知消息 |
 
 ## API 设计
 
@@ -50,20 +49,9 @@ CREATE TABLE comment (
 comment:count:{itemId}   STRING   评论计数 (INCR/DECR)
 ```
 
-## Kafka 通知 (可选)
+## 设计决策
 
-```
-Topic: comment-notify
-Key:   itemId
-Value: { commentId, itemId, userId, replyUserId }
-→ 消费者: 推送通知给被评论者/被回复者
-```
-
-## 待开发
-
-- [ ] Comment 实体 + 表 + Mapper
-- [ ] 发表评论 (一级 + 二级回复)
-- [ ] 评论列表 (游标分页，按时间倒序)
-- [ ] 删除评论 (软删除/仅自己的)
-- [ ] Redis 评论计数 (INCR on create, DECR on delete)
-- [ ] Kafka 评论通知
+- 二级回复通过 parent_id 关联父评论，reply_user_id 记录被回复者
+- 评论数用 Redis STRING 计数，INCR on create / DECR on delete
+- 评论列表用游标分页 (lastCommentId)，按时间倒序
+- Kafka 通知被评论者/被回复者 (Topic: comment-notify)

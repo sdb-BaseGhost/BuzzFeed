@@ -4,7 +4,7 @@
 
 对帖子点赞/取消点赞，Redis 计数，支持查询"谁赞了"和"我是否已赞"。
 
-## 涉及文件 (待开发)
+## 涉及文件 (待实现)
 
 | 层 | 文件 | 职责 |
 |----|------|------|
@@ -48,25 +48,11 @@ like:set:{itemId}    SET      点赞用户集合 (SADD/SREM/SISMEMBER)
 like:count:{itemId}  STRING   点赞计数 (INCR/DECR, 定期从DB校准)
 ```
 
-## 数据一致性
+## 设计决策
 
-```
-写入流程:
-  1. INSERT item_like (唯一索引防重复)
-  2. SADD like:set:{itemId} userId
-  3. INCR like:count:{itemId}
-  取消时: DELETE + SREM + DECR
-
-Canal 同步 (可选):
-  监听 item_like 表 INSERT/DELETE → 同步 Redis SET 和计数
-```
-
-## 待开发
-
-- [ ] Like 实体 + 表 + Mapper
-- [ ] 点赞/取消点赞 (幂等, 唯一索引)
-- [ ] Redis SET 记录点赞用户 (SISMEMBER 判断状态)
-- [ ] Redis 点赞计数
-- [ ] 批量查询点赞状态 (pipeline)
-- [ ] 点赞列表 (游标分页)
-- [ ] item_info 表 like_count 字段同步
+- 唯一索引 (item_id, user_id) 保证幂等，一人只能赞一次
+- 写入流程: INSERT item_like → SADD like:set → INCR like:count
+- 取消流程: DELETE → SREM → DECR
+- 批量查询点赞状态用 Pipeline 批量 SISMEMBER，避免 N+1
+- Canal 同步可选: 监听 item_like 表 INSERT/DELETE → 同步 Redis SET 和计数
+- item_info 表 like_count 字段需与 Redis 计数保持同步

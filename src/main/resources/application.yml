@@ -57,3 +57,5 @@ ffmpeg:
 feed:
   active-days: 7
   big-v-threshold: 2
+  shard-size: 5000
+  executor-concurrency: 3
